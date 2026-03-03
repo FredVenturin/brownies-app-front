@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:3000";
+const API = "https://brownie-app-back.onrender.com";
 
 async function request(path, { method = "GET", body } = {}) {
   const res = await fetch(`${API}${path}`, {
