@@ -1,7 +1,28 @@
 import { useEffect, useState } from "react";
 import { ordersApi } from "./services/api";
 
-const API = import.meta.env.VITE_API_URL;
+const RAW_API = import.meta.env.VITE_API_URL;
+if (!RAW_API) {
+  throw new Error("VITE_API_URL não definida. Configure na Vercel (Environment Variables).");
+}
+const API = RAW_API.replace(/\/+$/, ""); // remove barra final
+
+async function request(path, { method = "GET", body } = {}) {
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  let payload = null;
+  try {
+    payload = await res.json();
+  } catch {
+    payload = null;
+  }
+
+  return { ok: res.ok, status: res.status, payload };
+}
 
 function App() {
   const [orders, setOrders] = useState([]);
@@ -70,11 +91,9 @@ function App() {
     setItems((prev) =>
       prev.map((it, i) => {
         if (i !== index) return it;
-
         if (field === "quantidade") return { ...it, quantidade: Number(value) };
         if (field === "price") return { ...it, price: Number(value) };
         if (field === "cost") return { ...it, cost: Number(value) };
-
         return { ...it, [field]: value };
       })
     );
@@ -90,8 +109,12 @@ function App() {
     };
   }
 
+  function getCount(payload) {
+    return payload?.data?.count ?? payload?.data?.attributes?.count ?? 0;
+  }
+
   async function loadOrdersPaginated() {
-    const payload = isFiltered
+    const res = isFiltered
       ? await ordersApi.filter({
           status: filterStatus || undefined,
           name: filterName || undefined,
@@ -101,6 +124,9 @@ function App() {
           limit,
         })
       : await ordersApi.listPaginated({ page, limit });
+
+    // compatível com services/api.js melhorado (retorna {ok,status,payload})
+    const payload = res?.payload ?? res;
 
     const list = payload?.data?.attributes ?? [];
     setOrders(list);
@@ -115,9 +141,34 @@ function App() {
     );
   }
 
+  async function loadStats() {
+    const statuses = ["confirmed", "preparing", "sold", "cancelled"];
+
+    const results = await Promise.all([
+      ordersApi.count(), // total
+      ...statuses.map((s) => ordersApi.count({ status: s })),
+    ]);
+
+    // compatível com services/api.js melhorado
+    const totalPayload = results[0]?.payload ?? results[0];
+    const confirmedPayload = results[1]?.payload ?? results[1];
+    const preparingPayload = results[2]?.payload ?? results[2];
+    const soldPayload = results[3]?.payload ?? results[3];
+    const cancelledPayload = results[4]?.payload ?? results[4];
+
+    setStats({
+      total: getCount(totalPayload),
+      confirmed: getCount(confirmedPayload),
+      preparing: getCount(preparingPayload),
+      sold: getCount(soldPayload),
+      cancelled: getCount(cancelledPayload),
+    });
+  }
+
   useEffect(() => {
     loadOrdersPaginated().catch(console.error);
     loadStats().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
 
   async function deleteOrder(orderId) {
@@ -125,18 +176,18 @@ function App() {
     if (!ok) return;
 
     setLoading(true);
-
     try {
-      const res = await fetch(`${API}/delivery/order/${orderId}`, {
-        method: "DELETE",
-      });
+      // Se você adicionou ordersApi.deleteOne, use ela:
+      // const { ok: okRes, status: httpStatus, payload } = await ordersApi.deleteOne(orderId);
 
-      const payload = await res.json();
+      // Mantendo via request local (se preferir)
+      const { ok: okRes, status: httpStatus, payload } = await request(
+        `/delivery/order/${orderId}`,
+        { method: "DELETE" }
+      );
 
-      if (!res.ok) {
-        console.log("STATUS CODE:", res.status);
-        console.log("PAYLOAD:", payload);
-        alert(JSON.stringify(payload, null, 2));
+      if (!okRes) {
+        alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
         return;
       }
 
@@ -150,54 +201,20 @@ function App() {
     }
   }
 
-  async function loadStats() {
-    const statuses = ["confirmed", "preparing", "sold", "cancelled"];
-
-    const results = await Promise.all([
-      fetch(`${API}/delivery/orders/count`).then((r) => r.json()),
-      ...statuses.map((s) =>
-        fetch(`${API}/delivery/orders/count?status=${s}`).then((r) => r.json())
-      ),
-    ]);
-
-    const getCount = (payload) =>
-      payload?.data?.count ?? payload?.data?.attributes?.count ?? 0;
-
-    const [
-      totalPayload,
-      confirmedPayload,
-      preparingPayload,
-      soldPayload,
-      cancelledPayload,
-    ] = results;
-
-    setStats({
-      total: getCount(totalPayload),
-      confirmed: getCount(confirmedPayload),
-      preparing: getCount(preparingPayload),
-      sold: getCount(soldPayload),
-      cancelled: getCount(cancelledPayload),
-    });
-  }
-
   async function updateOrderStatus(orderId, newStatus) {
     setLoading(true);
 
-    const body = { status: newStatus };
-
     try {
-      const res = await fetch(`${API}/delivery/order/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+      // Se você adicionou ordersApi.updateStatus, use ela:
+      // const { ok: okRes, status: httpStatus, payload } = await ordersApi.updateStatus(orderId, newStatus);
 
-      const payload = await res.json();
+      const { ok: okRes, status: httpStatus, payload } = await request(
+        `/delivery/order/${orderId}/status`,
+        { method: "PATCH", body: { status: newStatus } }
+      );
 
-      if (!res.ok) {
-        console.log("STATUS CODE:", res.status);
-        console.log("PAYLOAD:", payload);
-        alert(JSON.stringify(payload, null, 2));
+      if (!okRes) {
+        alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
         return;
       }
 
@@ -236,17 +253,16 @@ function App() {
     };
 
     try {
-      const res = await fetch(`${API}/delivery/order`, {
+      // Se você adicionou ordersApi.create, use ela:
+      // const { ok: okRes, status: httpStatus, payload } = await ordersApi.create(body);
+
+      const { ok: okRes, status: httpStatus, payload } = await request(`/delivery/order`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body,
       });
 
-      const payload = await res.json();
-
-      if (!res.ok) {
-        console.error("Erro ao criar:", payload);
-        alert("Erro ao criar pedido (veja o console).");
+      if (!okRes) {
+        alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
         return;
       }
 
@@ -265,8 +281,6 @@ function App() {
     }
   }
 
-  // ======= TÓPICO 7 (AÇÕES EM MASSA BASEADAS NO FILTRO) =======
-
   async function bulkUpdateStatus(toStatus) {
     const filter = buildActiveFilter();
 
@@ -278,12 +292,10 @@ function App() {
     );
     if (!ok) return;
 
-    const { ok: okRes, status: httpStatus, payload } = await ordersApi.updateMany(
-      {
-        filter,
-        update: { status: toStatus },
-      }
-    );
+    const { ok: okRes, status: httpStatus, payload } = await ordersApi.updateMany({
+      filter,
+      update: { status: toStatus },
+    });
 
     if (!okRes) {
       alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
@@ -322,9 +334,7 @@ function App() {
     );
     if (!ok) return;
 
-    const { ok: okRes, status: httpStatus, payload } = await ordersApi.deleteMany({
-      filter,
-    });
+    const { ok: okRes, status: httpStatus, payload } = await ordersApi.deleteMany({ filter });
 
     if (!okRes) {
       alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
@@ -334,8 +344,6 @@ function App() {
     await loadOrdersPaginated();
     await loadStats();
   }
-
-  // ============================================================
 
   const soldOrders = orders.filter((o) => o.status === "sold");
 
@@ -419,9 +427,7 @@ function App() {
       <form onSubmit={handleCreateOrder} className="card form">
         <div className="row">
           <div>
-            <div style={{ fontWeight: 800, letterSpacing: "-0.4px" }}>
-              Criar pedido
-            </div>
+            <div style={{ fontWeight: 800, letterSpacing: "-0.4px" }}>Criar pedido</div>
             <div className="mini">Preencha só o essencial. O total é calculado.</div>
           </div>
 
@@ -514,7 +520,9 @@ function App() {
                     type="number"
                     min="1"
                     value={it.quantidade}
-                    onChange={(e) => updateItemRow(idx, "quantidade", e.target.value)}
+                    onChange={(e) =>
+                      updateItemRow(idx, "quantidade", e.target.value)
+                    }
                     required
                   />
                 </label>
@@ -595,7 +603,6 @@ function App() {
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
           />
-
           <input
             className="input"
             type="date"
@@ -603,17 +610,26 @@ function App() {
             onChange={(e) => setEndDate(e.target.value)}
           />
 
-          <button type="button" className="btn btnPrimary" onClick={applyFilter} disabled={loading}>
+          <button
+            type="button"
+            className="btn btnPrimary"
+            onClick={applyFilter}
+            disabled={loading}
+          >
             Filtrar
           </button>
 
-          <button type="button" className="btn" onClick={clearFilter} disabled={loading}>
+          <button
+            type="button"
+            className="btn"
+            onClick={clearFilter}
+            disabled={loading}
+          >
             Limpar
           </button>
         </div>
       </div>
 
-      {/* AÇÕES EM MASSA (TÓPICO 7) */}
       <div className="card" style={{ padding: 12, marginTop: 14 }}>
         <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
           <button
@@ -655,7 +671,8 @@ function App() {
         </div>
 
         <div className="mini" style={{ marginTop: 8 }}>
-          Ações em massa usam o filtro atual. Se você não estiver filtrando, afeta TODOS.
+          Ações em massa usam o filtro atual. Se você não estiver filtrando, afeta
+          TODOS.
         </div>
       </div>
 
@@ -707,7 +724,8 @@ function App() {
           {orders.map((order) => {
             const orderTotal = Number(order?.prices?.total ?? 0);
             const orderCost = (order.itens ?? []).reduce(
-              (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
+              (acc, it) =>
+                acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
               0
             );
             const orderProfit = orderTotal - orderCost;
@@ -777,7 +795,9 @@ function App() {
                   <select
                     className="select"
                     value={order.status}
-                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                    onChange={(e) =>
+                      updateOrderStatus(order._id, e.target.value)
+                    }
                     disabled={loading}
                     style={{ flex: 1 }}
                   >
