@@ -1,4 +1,7 @@
-const API = "https://brownie-app-back.onrender.com";
+const API = import.meta.env.VITE_API_URL;
+if (!API) {
+  throw new Error("VITE_API_URL não definida. Configure no .env e/ou na Vercel.");
+}
 
 async function request(path, { method = "GET", body } = {}) {
   const res = await fetch(`${API}${path}`, {
