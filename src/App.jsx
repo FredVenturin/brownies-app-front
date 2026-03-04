@@ -35,6 +35,13 @@ function App() {
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientPhone, setNewClientPhone] = useState("");
 
+  const [products, setProducts] = useState([]);
+  const [showNewProduct, setShowNewProduct] = useState(false);
+
+  const [newProductName, setNewProductName] = useState("");
+  const [newProductSalePrice, setNewProductSalePrice] = useState("");
+  const [newProductCost, setNewProductCost] = useState("");
+
   const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
   const [stats, setStats] = useState({
@@ -121,9 +128,34 @@ function App() {
     setItems((prev) =>
       prev.map((it, i) => {
         if (i !== index) return it;
-        if (field === "quantidade") return { ...it, quantidade: Number(value) };
-        if (field === "price") return { ...it, price: Number(value) };
-        if (field === "cost") return { ...it, cost: Number(value) };
+
+        if (field === "quantidade") {
+          return { ...it, quantidade: Number(value) };
+        }
+
+        if (field === "price") {
+          return { ...it, price: Number(value) };
+        }
+
+        if (field === "cost") {
+          return { ...it, cost: Number(value) };
+        }
+
+        if (field === "item") {
+          const product = products.find((p) => p.name === value);
+
+          if (product) {
+            return {
+              ...it,
+              item: value,
+              price: Number(product.sale_price),
+              cost: Number(product.cost),
+            };
+          }
+
+          return { ...it, item: value };
+        }
+
         return { ...it, [field]: value };
       })
     );
@@ -142,6 +174,22 @@ function App() {
   function getCount(payload) {
     return payload?.data?.count ?? payload?.data?.attributes?.count ?? 0;
   }
+
+
+  async function loadProducts() {
+    try {
+      const res = await ordersApi.listProducts();
+
+      const payload = res?.payload ?? res;
+
+      const list = payload?.data?.attributes ?? [];
+
+      setProducts(list);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
 
   async function loadClients() {
     try {
@@ -255,6 +303,7 @@ function App() {
     loadProfitSummary().catch(console.error);
     loadProfitPeriod().catch(console.error);
     loadClients().catch(console.error);
+    loadProducts().catch(console.error);
   }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
 
   useEffect(() => {
@@ -760,15 +809,98 @@ function App() {
             >
               <div style={{ fontWeight: 800 }}>Itens</div>
 
-              <button
-                type="button"
-                className="btn"
-                onClick={addItemRow}
-                disabled={loading}
-              >
-                + Adicionar item
-              </button>
+              <div className="row" style={{ gap: 8 }}>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setShowNewProduct((v) => !v)}
+                  disabled={loading}
+                >
+                  {showNewProduct ? "Fechar cadastro" : "+ Cadastrar produto"}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={addItemRow}
+                  disabled={loading}
+                >
+                  + Adicionar item
+                </button>
+              </div>
             </div>
+            {showNewProduct ? (
+              <div className="card" style={{ padding: 12, marginBottom: 12 }}>
+                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                  <input
+                    className="input"
+                    placeholder="Nome do produto"
+                    value={newProductName}
+                    onChange={(e) => setNewProductName(e.target.value)}
+                    style={{ flex: 1, minWidth: 220 }}
+                  />
+
+                  <input
+                    className="input"
+                    type="number"
+                    placeholder="Preço de venda"
+                    value={newProductSalePrice}
+                    onChange={(e) => setNewProductSalePrice(e.target.value)}
+                    style={{ width: 160 }}
+                  />
+
+                  <input
+                    className="input"
+                    type="number"
+                    placeholder="Custo"
+                    value={newProductCost}
+                    onChange={(e) => setNewProductCost(e.target.value)}
+                    style={{ width: 140 }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btnPrimary"
+                    disabled={loading || !newProductName.trim()}
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+
+                        const res = await ordersApi.createProduct({
+                          data: {
+                            name: newProductName.trim(),
+                            sale_price: Number(newProductSalePrice),
+                            cost: Number(newProductCost),
+                          },
+                        });
+
+                        const ok = res?.ok ?? true;
+                        if (!ok) {
+                          alert("Erro ao criar produto.");
+                          console.error(res);
+                          return;
+                        }
+
+                        await loadProducts();
+
+                        setNewProductName("");
+                        setNewProductSalePrice("");
+                        setNewProductCost("");
+
+                        setShowNewProduct(false);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Erro ao criar produto.");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    Salvar produto
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {(items ?? []).map((it, idx) => (
               <div
@@ -782,14 +914,21 @@ function App() {
                 }}
               >
                 <label className="label">
-                  Item
+                  Produto
                   <input
                     className="input"
+                    list="products-list"
                     value={it.item}
                     onChange={(e) => updateItemRow(idx, "item", e.target.value)}
-                    placeholder="Ex: brownie nutella"
+                    placeholder="Digite ou selecione um produto"
                     required
                   />
+
+                  <datalist id="products-list">
+                    {products.map((p) => (
+                      <option key={p._id} value={p.name} />
+                    ))}
+                  </datalist>
                 </label>
 
                 <label className="label">

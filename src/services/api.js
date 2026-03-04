@@ -46,6 +46,14 @@ export const ordersApi = {
       method: "POST",
       body,
     }),
+
+  listProducts: () => request("/delivery/products"),
+
+  createProduct: (body) =>
+    request("/delivery/products", {
+      method: "POST",
+      body,
+    }),
     
 
   filter: ({ status, name, start_date, end_date, page, limit } = {}) =>
