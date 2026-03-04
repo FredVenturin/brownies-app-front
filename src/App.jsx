@@ -42,6 +42,9 @@ function App() {
   const [newProductSalePrice, setNewProductSalePrice] = useState("");
   const [newProductCost, setNewProductCost] = useState("");
 
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+
   const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
   const [stats, setStats] = useState({
@@ -333,6 +336,10 @@ function App() {
 
       await loadOrdersPaginated();
       await loadStats();
+      await loadProfitSummary();
+      await loadProfitPeriod();
+      await loadClients();
+      await loadProducts();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -360,6 +367,101 @@ function App() {
 
       await loadOrdersPaginated();
       await loadStats();
+      await loadProfitSummary();
+      await loadProfitPeriod();
+      await loadClients();
+      await loadProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Erro de rede (veja o console).");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function startEditOrder(order) {
+    setIsEditing(true);
+    setEditingOrderId(order._id);
+
+    setName(order?.name ?? "");
+    setOrderDate((order?.order_date ?? today).slice(0, 10));
+    setStatus(order?.status ?? "confirmed");
+
+    const mappedItems =
+      (order?.itens ?? []).length > 0
+        ? (order.itens ?? []).map((it) => ({
+            item: it.item ?? "",
+            quantidade: Number(it.quantidade ?? 1),
+            price: Number(it.price ?? 0),
+            cost: Number(it.cost ?? 0),
+          }))
+        : [{ item: "", quantidade: 1, price: 0, cost: 0 }];
+
+    setItems(mappedItems);
+  }
+
+  function cancelEditOrder() {
+    setIsEditing(false);
+    setEditingOrderId(null);
+
+    setName("");
+    setItems([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
+    setStatus("confirmed");
+    setOrderDate(today);
+    setShowNewClient(false);
+    setShowNewProduct(false);
+    setNewClientName("");
+    setNewClientPhone("");
+    setNewProductName("");
+    setNewProductSalePrice("");
+    setNewProductCost("");
+  }
+
+
+  async function handleUpdateOrder(e) {
+    e.preventDefault();
+    if (!editingOrderId) return;
+
+    setLoading(true);
+
+    const total = items.reduce(
+      (acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0),
+      0
+    );
+
+    const body = {
+      data: {
+        name,
+        order_date: orderDate || undefined,
+        status,
+        itens: items.map((it) => ({
+          item: String(it.item || "").trim(),
+          quantidade: Number(it.quantidade),
+          price: Number(it.price),
+          cost: Number(it.cost),
+        })),
+        prices: { total },
+      },
+    };
+
+    try {
+      const { ok: okRes, status: httpStatus, payload } = await request(
+        `/delivery/order/${editingOrderId}`,
+        { method: "PATCH", body }
+      );
+
+      if (!okRes) {
+        alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
+        return;
+      }
+
+      cancelEditOrder();
+      await loadOrdersPaginated();
+      await loadStats();
+      await loadProfitSummary();
+      await loadProfitPeriod();
+      await loadClients();
+      await loadProducts();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -413,6 +515,10 @@ function App() {
 
       await loadOrdersPaginated();
       await loadStats();
+      await loadProfitSummary();
+      await loadProfitPeriod();
+      await loadClients();
+      await loadProducts();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -444,6 +550,10 @@ function App() {
 
     await loadOrdersPaginated();
     await loadStats();
+    await loadProfitSummary();
+    await loadProfitPeriod();
+    await loadClients();
+    await loadProducts();
   }
 
   async function bulkIncrement(fieldPath, value) {
@@ -461,6 +571,10 @@ function App() {
 
     await loadOrdersPaginated();
     await loadStats();
+    await loadProfitSummary();
+    await loadProfitPeriod();
+    await loadClients();
+    await loadProducts();
   }
 
   async function bulkDelete() {
@@ -483,6 +597,10 @@ function App() {
 
     await loadOrdersPaginated();
     await loadStats();
+    await loadProfitSummary();
+    await loadProfitPeriod();
+    await loadClients();
+    await loadProducts();
   }
 
   const soldOrders = orders.filter((o) => o.status === "sold");
@@ -676,16 +794,19 @@ function App() {
         </div>
       </div>
 
-      <form onSubmit={handleCreateOrder} className="card form">
+      <form onSubmit={isEditing ? handleUpdateOrder : handleCreateOrder} className="card form">
         <div className="row">
           <div>
-            <div style={{ fontWeight: 800, letterSpacing: "-0.4px" }}>Criar pedido</div>
+            <div style={{ fontWeight: 800, letterSpacing: "-0.4px" }}>
+              {isEditing ? "Editar pedido" : "Criar pedido"}
+            </div>
             <div className="mini">Preencha só o essencial. O total é calculado.</div>
           </div>
 
           <div className="mini">
             Total: <strong>R$ {orderTotalPreview.toFixed(2)}</strong>
           </div>
+          {isEditing ? ( <button type="button" className="btn" onClick={cancelEditOrder} disabled={loading} style={{ marginLeft: "auto" }} > Cancelar edição </button> ) : null}
         </div>
 
         <div className="sep"></div>
@@ -986,7 +1107,7 @@ function App() {
 
           <div className="actions">
             <button className="btn btnPrimary" type="submit" disabled={loading}>
-              {loading ? "Criando..." : "Criar pedido"}
+              {loading ? (isEditing ? "Salvando..." : "Criando...") : (isEditing ? "Salvar alterações" : "Criar pedido")}
             </button>
           </div>
         </div>
@@ -1219,13 +1340,11 @@ function App() {
 
                 <div className="sep"></div>
 
-                <div className="row">
+                <div className="row" style={{ gap: 8 }}>
                   <select
                     className="select"
                     value={order.status}
-                    onChange={(e) =>
-                      updateOrderStatus(order._id, e.target.value)
-                    }
+                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
                     disabled={loading}
                     style={{ flex: 1 }}
                   >
@@ -1234,6 +1353,15 @@ function App() {
                     <option value="sold">sold</option>
                     <option value="cancelled">cancelled</option>
                   </select>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => startEditOrder(order)}
+                    disabled={loading}
+                  >
+                    Editar
+                  </button>
 
                   <button
                     type="button"
