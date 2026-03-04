@@ -38,7 +38,15 @@ export const ordersApi = {
   // GETs agora retornam o objeto completo (ok/status/payload) igual os outros
   listPaginated: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/orders${toQuery({ page, limit })}`),
-  
+
+  listClients: () => request("/delivery/clients"),
+
+  createClient: (body) =>
+    request("/delivery/clients", {
+      method: "POST",
+      body,
+    }),
+    
 
   filter: ({ status, name, start_date, end_date, page, limit } = {}) =>
     request(

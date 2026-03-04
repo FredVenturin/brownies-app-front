@@ -72,6 +72,8 @@ function App() {
   const [orderDate, setOrderDate] = useState(today);
 
   const [name, setName] = useState("");
+  const [clients, setClients] = useState([]);
+  const [newClientName, setNewClientName] = useState("");
   const [items, setItems] = useState([
     { item: "brownie", quantidade: 1, price: 10, cost: 5 },
   ]);
@@ -137,6 +139,20 @@ function App() {
 
   function getCount(payload) {
     return payload?.data?.count ?? payload?.data?.attributes?.count ?? 0;
+  }
+
+  async function loadClients() {
+    try {
+      const res = await ordersApi.listClients();
+
+      const payload = res?.payload ?? res;
+
+      const list = payload?.data?.attributes ?? [];
+
+      setClients(list);
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   async function loadOrdersPaginated() {
@@ -236,6 +252,7 @@ function App() {
     loadStats().catch(console.error);
     loadProfitSummary().catch(console.error);
     loadProfitPeriod().catch(console.error);
+    loadClients().catch(console.error);
   }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
 
   useEffect(() => {
@@ -624,14 +641,21 @@ function App() {
 
         <div className="formGrid">
           <label className="label">
-            Nome do cliente
-            <input
-              className="input"
+            Cliente
+            <select
+              className="select"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Joao"
               required
-            />
+            >
+              <option value="">Selecione um cliente</option>
+
+              {clients.map((c) => (
+                <option key={c._id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="label">
