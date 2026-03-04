@@ -28,6 +28,12 @@ function App() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [authOk, setAuthOk] = useState(false);
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
+  const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
+
   const [stats, setStats] = useState({
     total: 0,
     confirmed: 0,
@@ -61,6 +67,53 @@ function App() {
 
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
+
+  if (!authOk) {
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 16 }}>
+        <div className="card" style={{ width: "min(420px, 100%)", padding: 16 }}>
+          <h2 style={{ margin: 0 }}>Acesso</h2>
+          <p className="mini" style={{ marginTop: 8 }}>
+            Digite a senha para acessar o sistema.
+          </p>
+
+          <input
+            type="password"
+            placeholder="Senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ width: "100%", marginTop: 10 }}
+          />
+
+          {authError ? (
+            <div className="mini" style={{ marginTop: 8 }}>
+              {authError}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            className="btn"
+            style={{ width: "100%", marginTop: 10 }}
+            onClick={() => {
+              if (!ACCESS_PASSWORD) {
+                setAuthError("Senha não configurada. Defina VITE_ACCESS_PASSWORD na Vercel.");
+                return;
+              }
+              if (password === ACCESS_PASSWORD) {
+                setAuthOk(true);
+                setAuthError("");
+              } else {
+                setAuthError("Senha incorreta.");
+              }
+            }}
+          >
+            Entrar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   function applyFilter() {
     setIsFiltered(true);
