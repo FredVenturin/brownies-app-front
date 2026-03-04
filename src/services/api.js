@@ -38,6 +38,7 @@ export const ordersApi = {
   // GETs agora retornam o objeto completo (ok/status/payload) igual os outros
   listPaginated: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/orders${toQuery({ page, limit })}`),
+  
 
   filter: ({ status, name, start_date, end_date, page, limit } = {}) =>
     request(
@@ -57,6 +58,7 @@ export const ordersApi = {
   // Ações em massa (como já estava)
   updateMany: (body) => request(`/delivery/orders/update-many`, { method: "PATCH", body }),
   increment: (body) => request(`/delivery/orders/increment`, { method: "PATCH", body }),
+  profitSummary: () => request("/delivery/profit/summary"),
   deleteMany: (body) => request(`/delivery/orders/delete-many`, { method: "DELETE", body }),
 
   // Opcional mas MUITO recomendado: para parar de usar fetch direto no App.jsx

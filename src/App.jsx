@@ -43,6 +43,12 @@ function App() {
     cancelled: 0,
   });
 
+  const [profitSummary, setProfitSummary] = useState({
+    daily: { revenue: 0, cost: 0, profit: 0 },
+    monthly: { revenue: 0, cost: 0, profit: 0 },
+    annual: { revenue: 0, cost: 0, profit: 0 },
+  });
+
   const [meta, setMeta] = useState({
     page: 1,
     limit: 10,
@@ -173,10 +179,29 @@ function App() {
     });
   }
 
+  async function loadProfitSummary() {
+    try {
+      const res = await ordersApi.profitSummary();
+
+      const payload = res?.payload ?? res;
+
+      const attrs =
+        payload?.data?.attributes ?? {
+          daily: { revenue: 0, cost: 0, profit: 0 },
+          monthly: { revenue: 0, cost: 0, profit: 0 },
+          annual: { revenue: 0, cost: 0, profit: 0 },
+        };
+
+      setProfitSummary(attrs);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     loadOrdersPaginated().catch(console.error);
     loadStats().catch(console.error);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadProfitSummary().catch(console.error);
   }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
 
   async function deleteOrder(orderId) {
@@ -467,6 +492,21 @@ function App() {
         <div className="card statCard">
           <div className="statValue">R$ {profit.toFixed(2)}</div>
           <div className="statLabel">Lucro (Sold)</div>
+        </div>
+
+        <div className="card statCard">
+          <div className="statValue">R$ {Number(profitSummary.daily?.profit ?? 0).toFixed(2)}</div>
+          <div className="statLabel">Lucro do dia (Sold)</div>
+        </div>
+
+        <div className="card statCard">
+          <div className="statValue">R$ {Number(profitSummary.monthly?.profit ?? 0).toFixed(2)}</div>
+          <div className="statLabel">Lucro do mês (Sold)</div>
+        </div>
+
+        <div className="card statCard">
+          <div className="statValue">R$ {Number(profitSummary.annual?.profit ?? 0).toFixed(2)}</div>
+          <div className="statLabel">Lucro do ano (Sold)</div>
         </div>
 
         <div className="card statCard">
