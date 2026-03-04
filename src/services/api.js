@@ -55,6 +55,14 @@ export const ordersApi = {
   count: ({ status, name } = {}) =>
     request(`/delivery/orders/count${toQuery({ status, name })}`),
 
+  profitByPeriod: (params) => {
+    const q = new URLSearchParams();
+    if (params?.year) q.set("year", String(params.year));
+    if (params?.month) q.set("month", String(params.month));
+    if (params?.day) q.set("day", String(params.day));
+    return request(`/delivery/profit?${q.toString()}`);
+  },
+
   // Ações em massa (como já estava)
   updateMany: (body) => request(`/delivery/orders/update-many`, { method: "PATCH", body }),
   increment: (body) => request(`/delivery/orders/increment`, { method: "PATCH", body }),

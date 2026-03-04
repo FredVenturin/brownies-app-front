@@ -48,6 +48,17 @@ function App() {
     monthly: { revenue: 0, cost: 0, profit: 0 },
     annual: { revenue: 0, cost: 0, profit: 0 },
   });
+
+  const now = new Date();
+  const [profitYear, setProfitYear] = useState(String(now.getFullYear()));
+  const [profitMonth, setProfitMonth] = useState(""); // "" = todos
+  const [profitDay, setProfitDay] = useState(""); // "" = todos
+
+  const [profitPeriod, setProfitPeriod] = useState({
+    period: { label: "", start: "", end: "" },
+    result: { revenue: 0, cost: 0, profit: 0 },
+  });
+
   const [profitView, setProfitView] = useState("monthly"); // "daily" | "monthly" | "annual"
 
   const [meta, setMeta] = useState({
@@ -199,11 +210,38 @@ function App() {
     }
   }
 
+  async function loadProfitPeriod() {
+    try {
+      const res = await ordersApi.profitByPeriod({
+        year: profitYear,
+        month: profitMonth || undefined,
+        day: profitDay || undefined,
+      });
+
+      const payload = res?.payload ?? res;
+
+      const attrs = payload?.data?.attributes ?? {
+        period: { label: "", start: "", end: "" },
+        result: { revenue: 0, cost: 0, profit: 0 },
+      };
+
+      setProfitPeriod(attrs);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     loadOrdersPaginated().catch(console.error);
     loadStats().catch(console.error);
     loadProfitSummary().catch(console.error);
+    loadProfitPeriod().catch(console.error);
   }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
+
+  useEffect(() => {
+    if (!profitYear) return;
+    loadProfitPeriod().catch(console.error);
+  }, [profitYear, profitMonth, profitDay]);
 
   async function deleteOrder(orderId) {
     const ok = confirm("Tem certeza que deseja excluir esse pedido?");
@@ -525,6 +563,59 @@ function App() {
             </div>
           </div>
         </div>
+
+        <div className="card statCard" style={{ gridColumn: "1 / -1" }}>
+          <div className="row" style={{ gap: 10, alignItems: "center" }}>
+    
+          <div style={{ fontWeight: 800 }}>Lucro por período</div>
+
+          <select
+            className="select"
+            value={profitYear}
+            onChange={(e) => setProfitYear(e.target.value)}
+            style={{ width: 120 }}
+          >
+            {[2023, 2024, 2025, 2026].map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          <select
+            className="select"
+            value={profitMonth}
+            onChange={(e) => setProfitMonth(e.target.value)}
+            style={{ width: 140 }}
+          >
+            <option value="">Todos meses</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+
+          <select
+            className="select"
+            value={profitDay}
+            onChange={(e) => setProfitDay(e.target.value)}
+            style={{ width: 140 }}
+          >
+            <option value="">Todos dias</option>
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={d}>{d}</option>
+            ))}
+          </select>
+        </div>
+
+      <div style={{ marginTop: 12 }}>
+        <div className="statValue">
+          R$ {Number(profitPeriod.result?.profit ?? 0).toFixed(2)}
+        </div>
+
+        <div className="mini" style={{ marginTop: 6 }}>
+          Receita: <strong>R$ {Number(profitPeriod.result?.revenue ?? 0).toFixed(2)}</strong>{" "}
+          • Custo: <strong>R$ {Number(profitPeriod.result?.cost ?? 0).toFixed(2)}</strong>
+        </div>
+      </div>
+    </div>
 
         <div className="card statCard">
           <div className="statValue">{stats.confirmed}</div>
