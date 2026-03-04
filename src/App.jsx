@@ -657,7 +657,7 @@ function App() {
             onClick={() => bulkIncrement("prices.total", 1)}
             title="Incrementa prices.total em +1 para os pedidos do filtro atual"
           >
-            +1 em preço total (filtrados)
+            +1 TESTE em preço total (filtrados)
           </button>
 
           <button
