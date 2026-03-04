@@ -533,36 +533,6 @@ function App() {
           <div className="statLabel">Lucro (Sold)</div>
         </div>
 
-        <div className="card statCard" style={{ gridColumn: "1 / -1" }}>
-          <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div className="statLabel">Lucro (Sold)</div>
-              <div className="mini">Selecione o período</div>
-            </div>
-
-            <select
-              className="select"
-              value={profitView}
-              onChange={(e) => setProfitView(e.target.value)}
-              style={{ width: 180 }}
-            >
-              <option value="daily">Dia</option>
-              <option value="monthly">Mês</option>
-              <option value="annual">Ano</option>
-            </select>
-          </div>
-
-          <div style={{ marginTop: 10 }}>
-            <div className="statValue">
-              R$ {Number((profitSummary?.[profitView]?.profit ?? 0)).toFixed(2)}
-            </div>
-
-            <div className="mini" style={{ marginTop: 6 }}>
-              Receita: <strong>R$ {Number((profitSummary?.[profitView]?.revenue ?? 0)).toFixed(2)}</strong>{" "}
-              • Custo: <strong>R$ {Number((profitSummary?.[profitView]?.cost ?? 0)).toFixed(2)}</strong>
-            </div>
-          </div>
-        </div>
 
         <div className="card statCard" style={{ gridColumn: "1 / -1" }}>
           <div className="row" style={{ gap: 10, alignItems: "center" }}>
