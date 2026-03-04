@@ -31,6 +31,7 @@ function App() {
   const [authOk, setAuthOk] = useState(false);
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
@@ -389,13 +390,24 @@ function App() {
               Digite a senha para acessar o sistema.
             </p>
 
-            <input
-              type="password"
-              placeholder="Senha"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: "100%", marginTop: 10 }}
-            />
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{ flex: 1 }}
+              />
+
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setShowPassword((v) => !v)}
+                style={{ width: 110 }}
+              >
+                {showPassword ? "Ocultar" : "Mostrar"}
+              </button>
+            </div>
 
             {authError ? (
               <div className="mini" style={{ marginTop: 8 }}>
