@@ -32,6 +32,8 @@ function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showNewClient, setShowNewClient] = useState(false);
+  const [newClientPhone, setNewClientPhone] = useState("");
 
   const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
@@ -640,23 +642,92 @@ function App() {
         <div className="sep"></div>
 
         <div className="formGrid">
-          <label className="label">
-            Cliente
-            <input
-              className="input"
-              list="clients-list"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Digite ou selecione um cliente"
-              required
-            />
+          <div style={{ display: "grid", gap: 8 }}>
+            <label className="label">
+              Cliente
+              <input
+                className="input"
+                list="clients-list"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Digite ou selecione um cliente"
+                required
+              />
 
-            <datalist id="clients-list">
-              {clients.map((c) => (
-                <option key={c._id} value={c.name} />
-              ))}
-            </datalist>
-          </label>
+              <datalist id="clients-list">
+                {clients.map((c) => (
+                  <option key={c._id} value={c.name} />
+                ))}
+              </datalist>
+            </label>
+
+            <div className="row" style={{ gap: 10, justifyContent: "flex-start" }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => setShowNewClient((v) => !v)}
+                disabled={loading}
+              >
+                {showNewClient ? "Fechar cadastro" : "+ Cadastrar cliente"}
+              </button>
+            </div>
+
+            {showNewClient ? (
+              <div className="card" style={{ padding: 12 }}>
+                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                  <input
+                    className="input"
+                    placeholder="Nome do novo cliente"
+                    value={newClientName}
+                    onChange={(e) => setNewClientName(e.target.value)}
+                    style={{ flex: 1, minWidth: 220 }}
+                  />
+
+                  <input
+                    className="input"
+                    placeholder="Telefone (opcional)"
+                    value={newClientPhone}
+                    onChange={(e) => setNewClientPhone(e.target.value)}
+                    style={{ width: 220 }}
+                  />
+
+                  <button
+                    type="button"
+                    className="btn btnPrimary"
+                    disabled={loading || !newClientName.trim()}
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        const res = await ordersApi.createClient({
+                          data: { name: newClientName.trim(), phone: newClientPhone.trim() || undefined },
+                        });
+
+                        const ok = res?.ok ?? true;
+                        if (!ok) {
+                          alert("Erro ao criar cliente. Veja o console.");
+                          console.error(res);
+                          return;
+                        }
+
+                        await loadClients();
+                        setName(newClientName.trim());
+                        setNewClientName("");
+                        setNewClientPhone("");
+                        setShowNewClient(false);
+                      } catch (err) {
+                        console.error(err);
+                        alert("Erro ao criar cliente (veja o console).");
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    Salvar cliente
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
 
           <label className="label">
             Status
