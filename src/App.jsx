@@ -662,6 +662,16 @@ function App() {
 
           <button
             type="button"
+            className="btn"
+            disabled={loading}
+            onClick={() => bulkIncrement("prices.total", -1)}
+            title="Decrementa prices.total em -1 para os pedidos do filtro atual"
+          >
+            -1 em preço total (filtrados)
+          </button>
+
+          <button
+            type="button"
             className="btn btnDanger"
             disabled={loading}
             onClick={bulkDelete}
