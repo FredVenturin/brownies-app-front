@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ordersApi } from "./services/api";
 
 const RAW_API = import.meta.env.VITE_API_URL;
 if (!RAW_API) {
   throw new Error("VITE_API_URL não definida. Configure na Vercel (Environment Variables).");
 }
-const API = RAW_API.replace(/\/+$/, ""); // remove barra final
+const API = RAW_API.replace(/\/+$/, "");
 
 async function request(path, { method = "GET", body } = {}) {
   const res = await fetch(`${API}${path}`, {
@@ -24,6 +24,18 @@ async function request(path, { method = "GET", body } = {}) {
   return { ok: res.ok, status: res.status, payload };
 }
 
+// garante yyyy-mm-dd para input type="date"
+function toISODateInput(value, fallbackISO) {
+  try {
+    if (!value) return fallbackISO;
+    const d = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(d.getTime())) return fallbackISO;
+    return d.toISOString().slice(0, 10);
+  } catch {
+    return fallbackISO;
+  }
+}
+
 function App() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,6 +44,7 @@ function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
   const [showNewClient, setShowNewClient] = useState(false);
   const [newClientPhone, setNewClientPhone] = useState("");
 
@@ -63,15 +76,15 @@ function App() {
 
   const now = new Date();
   const [profitYear, setProfitYear] = useState(String(now.getFullYear()));
-  const [profitMonth, setProfitMonth] = useState(""); // "" = todos
-  const [profitDay, setProfitDay] = useState(""); // "" = todos
+  const [profitMonth, setProfitMonth] = useState("");
+  const [profitDay, setProfitDay] = useState("");
 
   const [profitPeriod, setProfitPeriod] = useState({
     period: { label: "", start: "", end: "" },
     result: { revenue: 0, cost: 0, profit: 0 },
   });
 
-  const [profitView, setProfitView] = useState("monthly"); // "daily" | "monthly" | "annual"
+  const [profitView, setProfitView] = useState("monthly");
 
   const [meta, setMeta] = useState({
     page: 1,
@@ -80,15 +93,13 @@ function App() {
     has_next: false,
   });
 
-  const today = new Date().toISOString().slice(0, 10);
-  const [orderDate, setOrderDate] = useState(today);
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const [orderDate, setOrderDate] = useState(todayISO);
 
   const [name, setName] = useState("");
   const [clients, setClients] = useState([]);
   const [newClientName, setNewClientName] = useState("");
-  const [items, setItems] = useState([
-    { item: "brownie", quantidade: 1, price: 10, cost: 5 },
-  ]);
+  const [items, setItems] = useState([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
   const [status, setStatus] = useState("confirmed");
 
   const [startDate, setStartDate] = useState("");
@@ -100,7 +111,6 @@ function App() {
 
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
-
 
   function applyFilter() {
     setIsFiltered(true);
@@ -132,21 +142,12 @@ function App() {
       prev.map((it, i) => {
         if (i !== index) return it;
 
-        if (field === "quantidade") {
-          return { ...it, quantidade: Number(value) };
-        }
-
-        if (field === "price") {
-          return { ...it, price: Number(value) };
-        }
-
-        if (field === "cost") {
-          return { ...it, cost: Number(value) };
-        }
+        if (field === "quantidade") return { ...it, quantidade: Number(value) };
+        if (field === "price") return { ...it, price: Number(value) };
+        if (field === "cost") return { ...it, cost: Number(value) };
 
         if (field === "item") {
           const product = products.find((p) => p.name === value);
-
           if (product) {
             return {
               ...it,
@@ -155,7 +156,6 @@ function App() {
               cost: Number(product.cost),
             };
           }
-
           return { ...it, item: value };
         }
 
@@ -178,30 +178,22 @@ function App() {
     return payload?.data?.count ?? payload?.data?.attributes?.count ?? 0;
   }
 
-
   async function loadProducts() {
     try {
       const res = await ordersApi.listProducts();
-
       const payload = res?.payload ?? res;
-
       const list = payload?.data?.attributes ?? [];
-
       setProducts(list);
     } catch (err) {
       console.error(err);
     }
   }
 
-
   async function loadClients() {
     try {
       const res = await ordersApi.listClients();
-
       const payload = res?.payload ?? res;
-
       const list = payload?.data?.attributes ?? [];
-
       setClients(list);
     } catch (err) {
       console.error(err);
@@ -220,7 +212,6 @@ function App() {
         })
       : await ordersApi.listPaginated({ page, limit });
 
-    // compatível com services/api.js melhorado (retorna {ok,status,payload})
     const payload = res?.payload ?? res;
 
     const list = payload?.data?.attributes ?? [];
@@ -238,13 +229,8 @@ function App() {
 
   async function loadStats() {
     const statuses = ["confirmed", "preparing", "sold", "cancelled"];
+    const results = await Promise.all([ordersApi.count(), ...statuses.map((s) => ordersApi.count({ status: s }))]);
 
-    const results = await Promise.all([
-      ordersApi.count(), // total
-      ...statuses.map((s) => ordersApi.count({ status: s })),
-    ]);
-
-    // compatível com services/api.js melhorado
     const totalPayload = results[0]?.payload ?? results[0];
     const confirmedPayload = results[1]?.payload ?? results[1];
     const preparingPayload = results[2]?.payload ?? results[2];
@@ -263,7 +249,6 @@ function App() {
   async function loadProfitSummary() {
     try {
       const res = await ordersApi.profitSummary();
-
       const payload = res?.payload ?? res;
 
       const attrs =
@@ -300,18 +285,19 @@ function App() {
     }
   }
 
+  async function reloadAll() {
+    await Promise.allSettled([loadOrdersPaginated(), loadStats(), loadProfitSummary(), loadProfitPeriod(), loadClients(), loadProducts()]);
+  }
+
   useEffect(() => {
-    loadOrdersPaginated().catch(console.error);
-    loadStats().catch(console.error);
-    loadProfitSummary().catch(console.error);
-    loadProfitPeriod().catch(console.error);
-    loadClients().catch(console.error);
-    loadProducts().catch(console.error);
+    reloadAll().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
 
   useEffect(() => {
     if (!profitYear) return;
     loadProfitPeriod().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profitYear, profitMonth, profitDay]);
 
   async function deleteOrder(orderId) {
@@ -320,26 +306,14 @@ function App() {
 
     setLoading(true);
     try {
-      // Se você adicionou ordersApi.deleteOne, use ela:
-      // const { ok: okRes, status: httpStatus, payload } = await ordersApi.deleteOne(orderId);
-
-      // Mantendo via request local (se preferir)
-      const { ok: okRes, status: httpStatus, payload } = await request(
-        `/delivery/order/${orderId}`,
-        { method: "DELETE" }
-      );
+      const { ok: okRes, status: httpStatus, payload } = await request(`/delivery/order/${orderId}`, { method: "DELETE" });
 
       if (!okRes) {
         alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
         return;
       }
 
-      await loadOrdersPaginated();
-      await loadStats();
-      await loadProfitSummary();
-      await loadProfitPeriod();
-      await loadClients();
-      await loadProducts();
+      await reloadAll();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -350,27 +324,18 @@ function App() {
 
   async function updateOrderStatus(orderId, newStatus) {
     setLoading(true);
-
     try {
-      // Se você adicionou ordersApi.updateStatus, use ela:
-      // const { ok: okRes, status: httpStatus, payload } = await ordersApi.updateStatus(orderId, newStatus);
-
-      const { ok: okRes, status: httpStatus, payload } = await request(
-        `/delivery/order/${orderId}/status`,
-        { method: "PATCH", body: { status: newStatus } }
-      );
+      const { ok: okRes, status: httpStatus, payload } = await request(`/delivery/order/${orderId}/status`, {
+        method: "PATCH",
+        body: { status: newStatus },
+      });
 
       if (!okRes) {
         alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
         return;
       }
 
-      await loadOrdersPaginated();
-      await loadStats();
-      await loadProfitSummary();
-      await loadProfitPeriod();
-      await loadClients();
-      await loadProducts();
+      await reloadAll();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -384,7 +349,7 @@ function App() {
     setEditingOrderId(order._id);
 
     setName(order?.name ?? "");
-    setOrderDate((order?.order_date ?? today).slice(0, 10));
+    setOrderDate(toISODateInput(order?.order_date, todayISO));
     setStatus(order?.status ?? "confirmed");
 
     const mappedItems =
@@ -407,9 +372,11 @@ function App() {
     setName("");
     setItems([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
     setStatus("confirmed");
-    setOrderDate(today);
+    setOrderDate(todayISO);
+
     setShowNewClient(false);
     setShowNewProduct(false);
+
     setNewClientName("");
     setNewClientPhone("");
     setNewProductName("");
@@ -417,17 +384,13 @@ function App() {
     setNewProductCost("");
   }
 
-
   async function handleUpdateOrder(e) {
     e.preventDefault();
     if (!editingOrderId) return;
 
     setLoading(true);
 
-    const total = items.reduce(
-      (acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0),
-      0
-    );
+    const total = items.reduce((acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0), 0);
 
     const body = {
       data: {
@@ -445,10 +408,10 @@ function App() {
     };
 
     try {
-      const { ok: okRes, status: httpStatus, payload } = await request(
-        `/delivery/order/${editingOrderId}`,
-        { method: "PATCH", body }
-      );
+      const { ok: okRes, status: httpStatus, payload } = await request(`/delivery/order/${editingOrderId}`, {
+        method: "PATCH",
+        body,
+      });
 
       if (!okRes) {
         alert(`Erro ${httpStatus}: ` + JSON.stringify(payload, null, 2));
@@ -456,12 +419,7 @@ function App() {
       }
 
       cancelEditOrder();
-      await loadOrdersPaginated();
-      await loadStats();
-      await loadProfitSummary();
-      await loadProfitPeriod();
-      await loadClients();
-      await loadProducts();
+      await reloadAll();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -474,10 +432,7 @@ function App() {
     e.preventDefault();
     setLoading(true);
 
-    const total = items.reduce(
-      (acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0),
-      0
-    );
+    const total = items.reduce((acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0), 0);
 
     const body = {
       data: {
@@ -495,9 +450,6 @@ function App() {
     };
 
     try {
-      // Se você adicionou ordersApi.create, use ela:
-      // const { ok: okRes, status: httpStatus, payload } = await ordersApi.create(body);
-
       const { ok: okRes, status: httpStatus, payload } = await request(`/delivery/order`, {
         method: "POST",
         body,
@@ -511,14 +463,9 @@ function App() {
       setName("");
       setItems([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
       setStatus("confirmed");
-      setOrderDate(today);
+      setOrderDate(todayISO);
 
-      await loadOrdersPaginated();
-      await loadStats();
-      await loadProfitSummary();
-      await loadProfitPeriod();
-      await loadClients();
-      await loadProducts();
+      await reloadAll();
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
@@ -532,9 +479,7 @@ function App() {
 
     const ok = confirm(
       `Atualizar status para "${toStatus.toUpperCase()}" em massa?\n` +
-        (isFiltered
-          ? "Vai afetar apenas o FILTRO atual."
-          : "ATENÇÃO: Vai afetar TODOS os pedidos!")
+        (isFiltered ? "Vai afetar apenas o FILTRO atual." : "ATENÇÃO: Vai afetar TODOS os pedidos!")
     );
     if (!ok) return;
 
@@ -548,12 +493,7 @@ function App() {
       return;
     }
 
-    await loadOrdersPaginated();
-    await loadStats();
-    await loadProfitSummary();
-    await loadProfitPeriod();
-    await loadClients();
-    await loadProducts();
+    await reloadAll();
   }
 
   async function bulkIncrement(fieldPath, value) {
@@ -569,12 +509,7 @@ function App() {
       return;
     }
 
-    await loadOrdersPaginated();
-    await loadStats();
-    await loadProfitSummary();
-    await loadProfitPeriod();
-    await loadClients();
-    await loadProducts();
+    await reloadAll();
   }
 
   async function bulkDelete() {
@@ -582,9 +517,7 @@ function App() {
 
     const ok = confirm(
       "Apagar pedidos em massa?\n" +
-        (isFiltered
-          ? "Vai apagar apenas os pedidos do FILTRO atual."
-          : "ATENÇÃO: Vai apagar TODOS os pedidos!")
+        (isFiltered ? "Vai apagar apenas os pedidos do FILTRO atual." : "ATENÇÃO: Vai apagar TODOS os pedidos!")
     );
     if (!ok) return;
 
@@ -595,34 +528,21 @@ function App() {
       return;
     }
 
-    await loadOrdersPaginated();
-    await loadStats();
-    await loadProfitSummary();
-    await loadProfitPeriod();
-    await loadClients();
-    await loadProducts();
+    await reloadAll();
   }
 
   const soldOrders = orders.filter((o) => o.status === "sold");
 
-  const revenue = soldOrders.reduce(
-    (acc, o) => acc + Number(o?.prices?.total ?? 0),
-    0
-  );
+  const revenue = soldOrders.reduce((acc, o) => acc + Number(o?.prices?.total ?? 0), 0);
 
   const totalCost = soldOrders.reduce((acc, o) => {
-    const orderCost = (o.itens ?? []).reduce((a, it) => {
-      return a + Number(it.quantidade ?? 0) * Number(it.cost ?? 0);
-    }, 0);
+    const orderCost = (o.itens ?? []).reduce((a, it) => a + Number(it.quantidade ?? 0) * Number(it.cost ?? 0), 0);
     return acc + orderCost;
   }, 0);
 
   const profit = revenue - totalCost;
 
-  const orderTotalPreview = items.reduce(
-    (acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0),
-    0
-  );
+  const orderTotalPreview = items.reduce((acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0), 0);
 
   function formatDateBR(value) {
     if (!value) return "-";
@@ -632,62 +552,51 @@ function App() {
   }
 
   if (!authOk) {
-      return (
-        <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 16 }}>
-          <div className="card" style={{ width: "min(420px, 100%)", padding: 16 }}>
-            <h2 style={{ margin: 0 }}>Acesso</h2>
-            <p className="mini" style={{ marginTop: 8 }}>
-              Digite a senha para acessar o sistema.
-            </p>
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 16 }}>
+        <div className="card" style={{ width: "min(420px, 100%)", padding: 16 }}>
+          <h2 style={{ margin: 0 }}>Acesso</h2>
+          <p className="mini" style={{ marginTop: 8 }}>Digite a senha para acessar o sistema.</p>
 
-            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ flex: 1 }}
-              />
+          <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ flex: 1 }}
+            />
 
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setShowPassword((v) => !v)}
-                style={{ width: 110 }}
-              >
-                {showPassword ? "Ocultar" : "Mostrar"}
-              </button>
-            </div>
-
-            {authError ? (
-              <div className="mini" style={{ marginTop: 8 }}>
-                {authError}
-              </div>
-            ) : null}
-
-            <button
-              type="button"
-              className="btn"
-              style={{ width: "100%", marginTop: 10 }}
-              onClick={() => {
-                if (!ACCESS_PASSWORD) {
-                  setAuthError("Senha não configurada. Defina VITE_ACCESS_PASSWORD na Vercel.");
-                  return;
-                }
-                if (password === ACCESS_PASSWORD) {
-                  setAuthOk(true);
-                  setAuthError("");
-                } else {
-                  setAuthError("Senha incorreta.");
-                }
-              }}
-            >
-              Entrar
+            <button type="button" className="btn" onClick={() => setShowPassword((v) => !v)} style={{ width: 110 }}>
+              {showPassword ? "Ocultar" : "Mostrar"}
             </button>
           </div>
+
+          {authError ? <div className="mini" style={{ marginTop: 8 }}>{authError}</div> : null}
+
+          <button
+            type="button"
+            className="btn"
+            style={{ width: "100%", marginTop: 10 }}
+            onClick={() => {
+              if (!ACCESS_PASSWORD) {
+                setAuthError("Senha não configurada. Defina VITE_ACCESS_PASSWORD na Vercel.");
+                return;
+              }
+              if (password === ACCESS_PASSWORD) {
+                setAuthOk(true);
+                setAuthError("");
+              } else {
+                setAuthError("Senha incorreta.");
+              }
+            }}
+          >
+            Entrar
+          </button>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
   return (
     <div className="container">
