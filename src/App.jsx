@@ -48,6 +48,7 @@ function App() {
     monthly: { revenue: 0, cost: 0, profit: 0 },
     annual: { revenue: 0, cost: 0, profit: 0 },
   });
+  const [profitView, setProfitView] = useState("monthly"); // "daily" | "monthly" | "annual"
 
   const [meta, setMeta] = useState({
     page: 1,
@@ -494,19 +495,35 @@ function App() {
           <div className="statLabel">Lucro (Sold)</div>
         </div>
 
-        <div className="card statCard">
-          <div className="statValue">R$ {Number(profitSummary.daily?.profit ?? 0).toFixed(2)}</div>
-          <div className="statLabel">Lucro do dia (Sold)</div>
-        </div>
+        <div className="card statCard" style={{ gridColumn: "1 / -1" }}>
+          <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div className="statLabel">Lucro (Sold)</div>
+              <div className="mini">Selecione o período</div>
+            </div>
 
-        <div className="card statCard">
-          <div className="statValue">R$ {Number(profitSummary.monthly?.profit ?? 0).toFixed(2)}</div>
-          <div className="statLabel">Lucro do mês (Sold)</div>
-        </div>
+            <select
+              className="select"
+              value={profitView}
+              onChange={(e) => setProfitView(e.target.value)}
+              style={{ width: 180 }}
+            >
+              <option value="daily">Dia</option>
+              <option value="monthly">Mês</option>
+              <option value="annual">Ano</option>
+            </select>
+          </div>
 
-        <div className="card statCard">
-          <div className="statValue">R$ {Number(profitSummary.annual?.profit ?? 0).toFixed(2)}</div>
-          <div className="statLabel">Lucro do ano (Sold)</div>
+          <div style={{ marginTop: 10 }}>
+            <div className="statValue">
+              R$ {Number((profitSummary?.[profitView]?.profit ?? 0)).toFixed(2)}
+            </div>
+
+            <div className="mini" style={{ marginTop: 6 }}>
+              Receita: <strong>R$ {Number((profitSummary?.[profitView]?.revenue ?? 0)).toFixed(2)}</strong>{" "}
+              • Custo: <strong>R$ {Number((profitSummary?.[profitView]?.cost ?? 0)).toFixed(2)}</strong>
+            </div>
+          </div>
         </div>
 
         <div className="card statCard">
