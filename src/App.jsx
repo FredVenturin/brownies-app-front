@@ -642,20 +642,20 @@ function App() {
         <div className="formGrid">
           <label className="label">
             Cliente
-            <select
-              className="select"
+            <input
+              className="input"
+              list="clients-list"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder="Digite ou selecione um cliente"
               required
-            >
-              <option value="">Selecione um cliente</option>
+            />
 
+            <datalist id="clients-list">
               {clients.map((c) => (
-                <option key={c._id} value={c.name}>
-                  {c.name}
-                </option>
+                <option key={c._id} value={c.name} />
               ))}
-            </select>
+            </datalist>
           </label>
 
           <label className="label">
