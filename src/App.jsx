@@ -531,9 +531,9 @@ function App() {
     await reloadAll();
   }
 
-  const revenue = Number(profitSummary?.annual?.revenue ?? 0);
-  const totalCost = Number(profitSummary?.annual?.cost ?? 0);
-  const profit = Number(profitSummary?.annual?.profit ?? 0);
+  const revenue = Number(profitSummary?.all_time?.revenue ?? 0);
+  const totalCost = Number(profitSummary?.all_time?.cost ?? 0);
+  const profit = Number(profitSummary?.all_time?.profit ?? 0);
 
   const orderTotalPreview = items.reduce((acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0), 0);
 
@@ -1179,7 +1179,7 @@ function App() {
                 acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
               0
             );
-            const orderProfit = orderTotal - orderCost;
+            const orderProfit = order.status === "sold" ? (orderTotal - orderCost) : 0;
 
             return (
               <div
@@ -1234,9 +1234,11 @@ function App() {
                     <div>
                       <strong>Custo:</strong> R$ {orderCost.toFixed(2)}
                     </div>
-                    <div>
-                      <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
-                    </div>
+                    {order.status === "sold" ? (
+                      <div>
+                        <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
