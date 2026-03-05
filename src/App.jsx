@@ -67,6 +67,8 @@ function App() {
   const [editClientName, setEditClientName] = useState("");
   const [editClientPhone, setEditClientPhone] = useState("");
 
+  const [activeView, setActiveView] = useState("orders"); // "orders" | "clients" | "products"
+
   const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
   const [stats, setStats] = useState({
@@ -738,898 +740,978 @@ async function saveProductEdit() {
     );
   }
 
-  return (
-    <div className="container">
-      <div className="header">
-        <div>
-          <h1 className="title">🍫 Pedidos</h1>
-          <p className="subtitle">Controle rápido de vendas e status</p>
-        </div>
-      </div>
-
-      <div className="grid stats">
-        <div className="card statCard">
-          <div className="statValue">{stats.total}</div>
-          <div className="statLabel">Total</div>
-        </div>
-
-        <div className="card statCard">
-          <div className="statValue">R$ {revenue.toFixed(2)}</div>
-          <div className="statLabel">Receita (Sold)</div>
-        </div>
-
-        <div className="card statCard">
-          <div className="statValue">R$ {totalCost.toFixed(2)}</div>
-          <div className="statLabel">Custo (Sold)</div>
-        </div>
-
-        <div className="card statCard">
-          <div className="statValue">R$ {profit.toFixed(2)}</div>
-          <div className="statLabel">Lucro (Sold)</div>
-        </div>
-
-
-        <div className="card statCard" style={{ gridColumn: "1 / -1" }}>
-          <div className="row" style={{ gap: 10, alignItems: "center" }}>
-    
-          <div style={{ fontWeight: 800 }}>Lucro por período</div>
-
-          <select
-            className="select"
-            value={profitYear}
-            onChange={(e) => setProfitYear(e.target.value)}
-            style={{ width: 120 }}
-          >
-            {[2023, 2024, 2025, 2026].map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-
-          <select
-            className="select"
-            value={profitMonth}
-            onChange={(e) => setProfitMonth(e.target.value)}
-            style={{ width: 140 }}
-          >
-            <option value="">Todos meses</option>
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-
-          <select
-            className="select"
-            value={profitDay}
-            onChange={(e) => setProfitDay(e.target.value)}
-            style={{ width: 140 }}
-          >
-            <option value="">Todos dias</option>
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        </div>
-
-      <div style={{ marginTop: 12 }}>
-        <div className="statValue">
-          R$ {Number(profitPeriod.result?.profit ?? 0).toFixed(2)}
-        </div>
-
-        <div className="mini" style={{ marginTop: 6 }}>
-          Receita: <strong>R$ {Number(profitPeriod.result?.revenue ?? 0).toFixed(2)}</strong>{" "}
-          • Custo: <strong>R$ {Number(profitPeriod.result?.cost ?? 0).toFixed(2)}</strong>
-        </div>
-      </div>
-    </div>
-
-        <div className="card statCard">
-          <div className="statValue">{stats.confirmed}</div>
-          <div className="statLabel">Confirmed</div>
-        </div>
-
-        <div className="card statCard">
-          <div className="statValue">{stats.preparing}</div>
-          <div className="statLabel">Preparing</div>
-        </div>
-
-        <div className="card statCard">
-          <div className="statValue">{stats.sold}</div>
-          <div className="statLabel">Sold</div>
-        </div>
-
-        <div className="card statCard">
-          <div className="statValue">{stats.cancelled}</div>
-          <div className="statLabel">Cancelled</div>
-        </div>
-      </div>
-
-      <form onSubmit={isEditing ? handleUpdateOrder : handleCreateOrder} className="card form">
-        <div className="row">
-          <div>
-            <div style={{ fontWeight: 800, letterSpacing: "-0.4px" }}>
-              {isEditing ? "Editar pedido" : "Criar pedido"}
-            </div>
-            <div className="mini">Preencha só o essencial. O total é calculado.</div>
-          </div>
-
-          <div className="mini">
-            Total: <strong>R$ {orderTotalPreview.toFixed(2)}</strong>
-          </div>
-          {isEditing ? ( <button type="button" className="btn" onClick={cancelEditOrder} disabled={loading} style={{ marginLeft: "auto" }} > Cancelar edição </button> ) : null}
-        </div>
-
-        <div className="sep"></div>
-
-        <div className="formGrid">
-          <div style={{ display: "grid", gap: 8 }}>
-            <label className="label">
-              Cliente
-              <input
-                className="input"
-                list="clients-list"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Digite ou selecione um cliente"
-                required
-              />
-
-              <datalist id="clients-list">
-                {clients.map((c) => (
-                  <option key={c._id} value={c.name} />
-                ))}
-              </datalist>
-            </label>
-
-            <div className="row" style={{ gap: 10, justifyContent: "flex-start" }}>
+    return (
+        <div className="container">
+          {/* NAV / TABS */}
+          <div className="card" style={{ padding: 12, marginTop: 14 }}>
+            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
               <button
                 type="button"
-                className="btn"
-                onClick={() => setShowNewClient((v) => !v)}
-                disabled={loading}
+                className={`btn ${activeView === "orders" ? "btnPrimary" : ""}`}
+                onClick={() => setActiveView("orders")}
               >
-                {showNewClient ? "Fechar cadastro" : "+ Cadastrar cliente"}
-              </button>
-            </div>
-
-            {showNewClient ? (
-              <div className="card" style={{ padding: 12 }}>
-                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-                  <input
-                    className="input"
-                    placeholder="Nome do novo cliente"
-                    value={newClientName}
-                    onChange={(e) => setNewClientName(e.target.value)}
-                    style={{ flex: 1, minWidth: 220 }}
-                  />
-
-                  <input
-                    className="input"
-                    placeholder="Telefone (opcional)"
-                    value={newClientPhone}
-                    onChange={(e) => setNewClientPhone(e.target.value)}
-                    style={{ width: 220 }}
-                  />
-
-                  <button
-                    type="button"
-                    className="btn btnPrimary"
-                    disabled={loading || !newClientName.trim()}
-                    onClick={async () => {
-                      try {
-                        setLoading(true);
-                        const res = await ordersApi.createClient({
-                          data: { name: newClientName.trim(), phone: newClientPhone.trim() || undefined },
-                        });
-
-                        const ok = res?.ok ?? true;
-                        if (!ok) {
-                          alert("Erro ao criar cliente. Veja o console.");
-                          console.error(res);
-                          return;
-                        }
-
-                        await loadClients();
-                        setName(newClientName.trim());
-                        setNewClientName("");
-                        setNewClientPhone("");
-                        setShowNewClient(false);
-                      } catch (err) {
-                        console.error(err);
-                        alert("Erro ao criar cliente (veja o console).");
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >
-                    Salvar cliente
-                  </button>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <label className="label">
-            Status
-            <select
-              className="select"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="confirmed">confirmed</option>
-              <option value="preparing">preparing</option>
-              <option value="sold">sold</option>
-              <option value="cancelled">cancelled</option>
-            </select>
-          </label>
-
-          <label className="label">
-            Data do pedido
-            <input
-              className="input"
-              type="date"
-              value={orderDate}
-              onChange={(e) => setOrderDate(e.target.value)}
-            />
-          </label>
-
-          <div style={{ gridColumn: "1 / -1" }}>
-            <div
-              className="row"
-              style={{ justifyContent: "space-between", marginBottom: 8 }}
-            >
-              <div style={{ fontWeight: 800 }}>Itens</div>
-
-              <div className="row" style={{ gap: 8 }}>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setShowNewProduct((v) => !v)}
-                  disabled={loading}
-                >
-                  {showNewProduct ? "Fechar cadastro" : "+ Cadastrar produto"}
-                </button>
-
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={addItemRow}
-                  disabled={loading}
-                >
-                  + Adicionar item
-                </button>
-              </div>
-            </div>
-            {showNewProduct ? (
-              <div className="card" style={{ padding: 12, marginBottom: 12 }}>
-                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-                  <input
-                    className="input"
-                    placeholder="Nome do produto"
-                    value={newProductName}
-                    onChange={(e) => setNewProductName(e.target.value)}
-                    style={{ flex: 1, minWidth: 220 }}
-                  />
-
-                  <input
-                    className="input"
-                    type="number"
-                    placeholder="Preço de venda"
-                    value={newProductSalePrice}
-                    onChange={(e) => setNewProductSalePrice(e.target.value)}
-                    style={{ width: 160 }}
-                  />
-
-                  <input
-                    className="input"
-                    type="number"
-                    placeholder="Custo"
-                    value={newProductCost}
-                    onChange={(e) => setNewProductCost(e.target.value)}
-                    style={{ width: 140 }}
-                  />
-
-                  <button
-                    type="button"
-                    className="btn btnPrimary"
-                    disabled={loading || !newProductName.trim()}
-                    onClick={async () => {
-                      try {
-                        setLoading(true);
-
-                        const res = await ordersApi.createProduct({
-                          data: {
-                            name: newProductName.trim(),
-                            sale_price: Number(newProductSalePrice),
-                            cost: Number(newProductCost),
-                          },
-                        });
-
-                        const ok = res?.ok ?? true;
-                        if (!ok) {
-                          alert("Erro ao criar produto.");
-                          console.error(res);
-                          return;
-                        }
-
-                        await loadProducts();
-
-                        setNewProductName("");
-                        setNewProductSalePrice("");
-                        setNewProductCost("");
-
-                        setShowNewProduct(false);
-                      } catch (err) {
-                        console.error(err);
-                        alert("Erro ao criar produto.");
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >
-                    Salvar produto
-                  </button>
-                </div>
-              </div>
-            ) : null}
-
-            {(items ?? []).map((it, idx) => (
-              <div
-                key={idx}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "2fr 1fr 1fr 1fr auto",
-                  gap: 10,
-                  marginBottom: 10,
-                  alignItems: "end",
-                }}
-              >
-                <label className="label">
-                  Produto
-                  <input
-                    className="input"
-                    list="products-list"
-                    value={it.item}
-                    onChange={(e) => updateItemRow(idx, "item", e.target.value)}
-                    placeholder="Digite ou selecione um produto"
-                    required
-                  />
-
-                  <datalist id="products-list">
-                    {products.map((p) => (
-                      <option key={p._id} value={p.name} />
-                    ))}
-                  </datalist>
-                </label>
-
-                <label className="label">
-                  Qtd
-                  <input
-                    className="input"
-                    type="number"
-                    min="1"
-                    value={it.quantidade}
-                    onChange={(e) =>
-                      updateItemRow(idx, "quantidade", e.target.value)
-                    }
-                    required
-                  />
-                </label>
-
-                <label className="label">
-                  Preço
-                  <input
-                    className="input"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={it.price}
-                    onChange={(e) => updateItemRow(idx, "price", e.target.value)}
-                    required
-                  />
-                </label>
-
-                <label className="label">
-                  Custo
-                  <input
-                    className="input"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={it.cost}
-                    onChange={(e) => updateItemRow(idx, "cost", e.target.value)}
-                    required
-                  />
-                </label>
-
-                <button
-                  type="button"
-                  className="btn btnDanger"
-                  onClick={() => removeItemRow(idx)}
-                  disabled={loading || items.length <= 1}
-                  style={{ height: 42 }}
-                >
-                  Remover
-                </button>
-              </div>
-            ))}
-          </div>
-
-          <div className="actions">
-            <button className="btn btnPrimary" type="submit" disabled={loading}>
-              {loading ? (isEditing ? "Salvando..." : "Criando...") : (isEditing ? "Salvar alterações" : "Criar pedido")}
-            </button>
-          </div>
-        </div>
-      </form>
-
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div className="row" style={{ gap: 10 }}>
-          <input
-            className="input"
-            placeholder="Filtrar por nome..."
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            style={{ flex: 1 }}
-          />
-
-          <select
-            className="select"
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ width: 160 }}
-          >
-            <option value="">Todos status</option>
-            <option value="confirmed">confirmed</option>
-            <option value="preparing">preparing</option>
-            <option value="sold">sold</option>
-            <option value="cancelled">cancelled</option>
-          </select>
-
-          <input
-            className="input"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <input
-            className="input"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-
-          <button
-            type="button"
-            className="btn btnPrimary"
-            onClick={applyFilter}
-            disabled={loading}
-          >
-            Filtrar
-          </button>
-
-          <button
-            type="button"
-            className="btn"
-            onClick={clearFilter}
-            disabled={loading}
-          >
-            Limpar
-          </button>
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            className="btn"
-            disabled={loading}
-            onClick={() => bulkUpdateStatus("sold")}
-          >
-            Marcar filtrados como SOLD
-          </button>
-
-          <button
-            type="button"
-            className="btn"
-            disabled={loading}
-            onClick={() => bulkUpdateStatus("cancelled")}
-          >
-            Marcar filtrados como CANCELLED
-          </button>
-
-          <button
-            type="button"
-            className="btn"
-            disabled={loading}
-            onClick={() => bulkIncrement("prices.total", 1)}
-            title="Incrementa prices.total em +1 para os pedidos do filtro atual"
-          >
-            +1 em preço total (filtrados)
-          </button>
-
-          <button
-            type="button"
-            className="btn"
-            disabled={loading}
-            onClick={() => bulkIncrement("prices.total", -1)}
-            title="Decrementa prices.total em -1 para os pedidos do filtro atual"
-          >
-            -1 em preço total (filtrados)
-          </button>
-
-          <button
-            type="button"
-            className="btn btnDanger"
-            disabled={loading}
-            onClick={bulkDelete}
-          >
-            Apagar filtrados
-          </button>
-        </div>
-
-        <div className="mini" style={{ marginTop: 8 }}>
-          Ações em massa usam o filtro atual. Se você não estiver filtrando, afeta
-          TODOS.
-        </div>
-      </div>
-
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div className="row" style={{ gap: 10, alignItems: "center" }}>
-          <button
-            type="button"
-            className="btn"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            ◀ Anterior
-          </button>
-
-          <div className="mini">
-            Página: <strong>{page}</strong> • Total: <strong>{meta.total}</strong>
-          </div>
-
-          <button
-            type="button"
-            className="btn"
-            disabled={!meta.has_next || loading}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Próxima ▶
-          </button>
-
-          <select
-            className="select"
-            value={limit}
-            onChange={(e) => {
-              setPage(1);
-              setLimit(Number(e.target.value));
-            }}
-            style={{ width: 140, marginLeft: "auto" }}
-          >
-            <option value={5}>5 / pág</option>
-            <option value={10}>10 / pág</option>
-            <option value={20}>20 / pág</option>
-            <option value={50}>50 / pág</option>
-          </select>
-        </div>
-      </div>
-      
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontWeight: 800 }}>Clientes</div>
-          <div className="mini">{clients.length} cadastrados</div>
-        </div>
-
-        <div className="sep"></div>
-
-        {editingClientId ? (
-          <div className="card" style={{ padding: 12, marginBottom: 12 }}>
-            <div className="mini" style={{ marginBottom: 8 }}>
-              Editando cliente: <strong>{editingClientId}</strong>
-            </div>
-
-            <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-              <input
-                className="input"
-                placeholder="Nome"
-                value={editClientName}
-                onChange={(e) => setEditClientName(e.target.value)}
-                style={{ flex: 1, minWidth: 220 }}
-              />
-
-              <input
-                className="input"
-                placeholder="Telefone (opcional)"
-                value={editClientPhone}
-                onChange={(e) => setEditClientPhone(e.target.value)}
-                style={{ width: 220 }}
-              />
-
-              <button
-                type="button"
-                className="btn btnPrimary"
-                disabled={loading || !editClientName.trim()}
-                onClick={saveClientEdit}
-              >
-                Salvar
+                Pedidos
               </button>
 
               <button
                 type="button"
-                className="btn"
-                disabled={loading}
-                onClick={cancelEditClient}
+                className={`btn ${activeView === "clients" ? "btnPrimary" : ""}`}
+                onClick={() => setActiveView("clients")}
               >
-                Cancelar
+                Clientes
+              </button>
+
+              <button
+                type="button"
+                className={`btn ${activeView === "products" ? "btnPrimary" : ""}`}
+                onClick={() => setActiveView("products")}
+              >
+                Produtos
               </button>
             </div>
           </div>
-        ) : null}
 
-        {clients.length === 0 ? (
-          <div className="mini">Nenhum cliente cadastrado.</div>
-        ) : (
-          <div style={{ display: "grid", gap: 8 }}>
-            {clients.map((c) => (
-              <div
-                key={c._id}
-                className="card"
-                style={{ padding: 10, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700 }}>{c.name}</div>
-                  <div className="mini">{c.phone ? c.phone : "Sem telefone"}</div>
+          {/* HEADER */}
+          <div className="header">
+            <div>
+              <h1 className="title">
+                🍫{" "}
+                {activeView === "orders"
+                  ? "Pedidos"
+                  : activeView === "clients"
+                  ? "Clientes"
+                  : "Produtos"}
+              </h1>
+              <p className="subtitle">Controle rápido de vendas e status</p>
+            </div>
+          </div>
+
+          {/* ========================= */}
+          {/* ======= PEDIDOS ========= */}
+          {/* ========================= */}
+          {activeView === "orders" ? (
+            <>
+              <div className="grid stats">
+                <div className="card statCard">
+                  <div className="statValue">{stats.total}</div>
+                  <div className="statLabel">Total</div>
                 </div>
 
-                <div className="row" style={{ gap: 8 }}>
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={loading}
-                    onClick={() => startEditClient(c)}
-                  >
-                    Editar
-                  </button>
-
-                  <button
-                    type="button"
-                    className="btn btnDanger"
-                    disabled={loading}
-                    onClick={() => removeClient(c._id)}
-                  >
-                    Excluir
-                  </button>
+                <div className="card statCard">
+                  <div className="statValue">R$ {revenue.toFixed(2)}</div>
+                  <div className="statLabel">Receita (Sold)</div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ fontWeight: 800 }}>Produtos</div>
-          <div className="mini">{products.length} cadastrados</div>
-        </div>
+                <div className="card statCard">
+                  <div className="statValue">R$ {totalCost.toFixed(2)}</div>
+                  <div className="statLabel">Custo (Sold)</div>
+                </div>
 
-        <div className="sep"></div>
+                <div className="card statCard">
+                  <div className="statValue">R$ {profit.toFixed(2)}</div>
+                  <div className="statLabel">Lucro (Sold)</div>
+                </div>
 
-        {editingProductId ? (
-          <div className="card" style={{ padding: 12, marginBottom: 12 }}>
-            <div className="mini" style={{ marginBottom: 8 }}>
-              Editando produto: <strong>{editingProductId}</strong>
-            </div>
+                <div className="card statCard" style={{ gridColumn: "1 / -1" }}>
+                  <div className="row" style={{ gap: 10, alignItems: "center" }}>
+                    <div style={{ fontWeight: 800 }}>Lucro por período</div>
 
-            <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-              <input
-                className="input"
-                placeholder="Nome"
-                value={editProductName}
-                onChange={(e) => setEditProductName(e.target.value)}
-                style={{ flex: 1, minWidth: 220 }}
-              />
+                    <select
+                      className="select"
+                      value={profitYear}
+                      onChange={(e) => setProfitYear(e.target.value)}
+                      style={{ width: 120 }}
+                    >
+                      {[2023, 2024, 2025, 2026].map((y) => (
+                        <option key={y} value={y}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
 
-              <input
-                className="input"
-                type="number"
-                placeholder="Preço venda"
-                value={editProductSalePrice}
-                onChange={(e) => setEditProductSalePrice(e.target.value)}
-                style={{ width: 160 }}
-              />
+                    <select
+                      className="select"
+                      value={profitMonth}
+                      onChange={(e) => setProfitMonth(e.target.value)}
+                      style={{ width: 140 }}
+                    >
+                      <option value="">Todos meses</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
 
-              <input
-                className="input"
-                type="number"
-                placeholder="Custo"
-                value={editProductCost}
-                onChange={(e) => setEditProductCost(e.target.value)}
-                style={{ width: 140 }}
-              />
+                    <select
+                      className="select"
+                      value={profitDay}
+                      onChange={(e) => setProfitDay(e.target.value)}
+                      style={{ width: 140 }}
+                    >
+                      <option value="">Todos dias</option>
+                      {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-              <button
-                type="button"
-                className="btn btnPrimary"
-                disabled={loading || !editProductName.trim()}
-                onClick={saveProductEdit}
-              >
-                Salvar
-              </button>
+                  <div style={{ marginTop: 12 }}>
+                    <div className="statValue">
+                      R$ {Number(profitPeriod.result?.profit ?? 0).toFixed(2)}
+                    </div>
 
-              <button
-                type="button"
-                className="btn"
-                disabled={loading}
-                onClick={cancelEditProduct}
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {products.length === 0 ? (
-          <div className="mini">Nenhum produto cadastrado.</div>
-        ) : (
-          <div style={{ display: "grid", gap: 8 }}>
-            {products.map((p) => (
-              <div
-                key={p._id}
-                className="card"
-                style={{ padding: 10, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700 }}>{p.name}</div>
-                  <div className="mini">
-                    Venda: <strong>R$ {Number(p.sale_price ?? 0).toFixed(2)}</strong>
-                    {" "}• Custo: <strong>R$ {Number(p.cost ?? 0).toFixed(2)}</strong>
+                    <div className="mini" style={{ marginTop: 6 }}>
+                      Receita:{" "}
+                      <strong>
+                        R$ {Number(profitPeriod.result?.revenue ?? 0).toFixed(2)}
+                      </strong>{" "}
+                      • Custo:{" "}
+                      <strong>
+                        R$ {Number(profitPeriod.result?.cost ?? 0).toFixed(2)}
+                      </strong>
+                    </div>
                   </div>
                 </div>
 
-                <div className="row" style={{ gap: 8 }}>
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={loading}
-                    onClick={() => startEditProduct(p)}
-                  >
-                    Editar
-                  </button>
+                <div className="card statCard">
+                  <div className="statValue">{stats.confirmed}</div>
+                  <div className="statLabel">Confirmed</div>
+                </div>
 
-                  <button
-                    type="button"
-                    className="btn btnDanger"
-                    disabled={loading}
-                    onClick={() => removeProduct(p._id)}
-                  >
-                    Excluir
-                  </button>
+                <div className="card statCard">
+                  <div className="statValue">{stats.preparing}</div>
+                  <div className="statLabel">Preparing</div>
+                </div>
+
+                <div className="card statCard">
+                  <div className="statValue">{stats.sold}</div>
+                  <div className="statLabel">Sold</div>
+                </div>
+
+                <div className="card statCard">
+                  <div className="statValue">{stats.cancelled}</div>
+                  <div className="statLabel">Cancelled</div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
 
-      {orders.length === 0 ? (
-        <p className="mini">Nenhum pedido encontrado.</p>
-      ) : (
-        <div className="grid orders">
-          {orders.map((order) => {
-            const orderTotal = (order.itens ?? []).reduce(
-              (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
-              0
-            );
-            const orderCost = (order.itens ?? []).reduce(
-              (acc, it) =>
-                acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
-              0
-            );
-            const orderProfit = order.status === "sold" ? (orderTotal - orderCost) : 0;
-
-            return (
-              <div
-                key={order._id}
-                className={`card orderCard status-${order.status || "unknown"}`}
+              <form
+                onSubmit={isEditing ? handleUpdateOrder : handleCreateOrder}
+                className="card form"
               >
                 <div className="row">
-                  <div style={{ fontWeight: 800 }}>{order.name}</div>
-                  <span className={`pill pill-${order.status || "unknown"}`}>
-                    {String(order.status || "").toUpperCase()}
-                  </span>
-                </div>
+                  <div>
+                    <div style={{ fontWeight: 800, letterSpacing: "-0.4px" }}>
+                      {isEditing ? "Editar pedido" : "Criar pedido"}
+                    </div>
+                    <div className="mini">
+                      Preencha só o essencial. O total é calculado.
+                    </div>
+                  </div>
 
-                <div className="kv">
-                  <div>
-                    <strong>ID:</strong> {order._id}
+                  <div className="mini">
+                    Total: <strong>R$ {orderTotalPreview.toFixed(2)}</strong>
                   </div>
-                  <div>
-                    <strong>Data:</strong> {formatDateBR(order.order_date)}
-                  </div>
+
+                  {isEditing ? (
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={cancelEditOrder}
+                      disabled={loading}
+                      style={{ marginLeft: "auto" }}
+                    >
+                      Cancelar edição
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="sep"></div>
 
-                <div style={{ marginTop: 8 }}>
-                  <strong>Itens:</strong>
+                <div className="formGrid">
+                  <div style={{ display: "grid", gap: 8 }}>
+                    <label className="label">
+                      Cliente
+                      <input
+                        className="input"
+                        list="clients-list"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Digite ou selecione um cliente"
+                        required
+                      />
+                      <datalist id="clients-list">
+                        {clients.map((c) => (
+                          <option key={c._id} value={c.name} />
+                        ))}
+                      </datalist>
+                    </label>
 
-                  {(order.itens ?? []).map((it, idx) => (
                     <div
-                      key={idx}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: 14,
-                        marginTop: 4,
-                      }}
+                      className="row"
+                      style={{ gap: 10, justifyContent: "flex-start" }}
                     >
-                      <span>
-                        {it.quantidade}x {it.item}
-                      </span>
-                      <span>
-                        R$ {(Number(it.quantidade) * Number(it.price)).toFixed(2)}
-                      </span>
+                      <button
+                        type="button"
+                        className="btn"
+                        onClick={() => setShowNewClient((v) => !v)}
+                        disabled={loading}
+                      >
+                        {showNewClient ? "Fechar cadastro" : "+ Cadastrar cliente"}
+                      </button>
                     </div>
-                  ))}
 
-                  <div style={{ marginTop: 8, fontWeight: "bold" }}>
-                    Total: R$ {orderTotal.toFixed(2)}
-                  </div>
+                    {showNewClient ? (
+                      <div className="card" style={{ padding: 12 }}>
+                        <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                          <input
+                            className="input"
+                            placeholder="Nome do novo cliente"
+                            value={newClientName}
+                            onChange={(e) => setNewClientName(e.target.value)}
+                            style={{ flex: 1, minWidth: 220 }}
+                          />
 
-                  <div style={{ marginTop: 8 }}>
-                    <div>
-                      <strong>Custo:</strong> R$ {orderCost.toFixed(2)}
-                    </div>
-                    {order.status === "sold" ? (
-                      <div>
-                        <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
+                          <input
+                            className="input"
+                            placeholder="Telefone (opcional)"
+                            value={newClientPhone}
+                            onChange={(e) => setNewClientPhone(e.target.value)}
+                            style={{ width: 220 }}
+                          />
+
+                          <button
+                            type="button"
+                            className="btn btnPrimary"
+                            disabled={loading || !newClientName.trim()}
+                            onClick={async () => {
+                              try {
+                                setLoading(true);
+                                const res = await ordersApi.createClient({
+                                  data: {
+                                    name: newClientName.trim(),
+                                    phone: newClientPhone.trim() || undefined,
+                                  },
+                                });
+
+                                const ok = res?.ok ?? true;
+                                if (!ok) {
+                                  alert("Erro ao criar cliente. Veja o console.");
+                                  console.error(res);
+                                  return;
+                                }
+
+                                await loadClients();
+                                setName(newClientName.trim());
+                                setNewClientName("");
+                                setNewClientPhone("");
+                                setShowNewClient(false);
+                              } catch (err) {
+                                console.error(err);
+                                alert("Erro ao criar cliente (veja o console).");
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                          >
+                            Salvar cliente
+                          </button>
+                        </div>
                       </div>
                     ) : null}
                   </div>
+
+                  <label className="label">
+                    Status
+                    <select
+                      className="select"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                    >
+                      <option value="confirmed">confirmed</option>
+                      <option value="preparing">preparing</option>
+                      <option value="sold">sold</option>
+                      <option value="cancelled">cancelled</option>
+                    </select>
+                  </label>
+
+                  <label className="label">
+                    Data do pedido
+                    <input
+                      className="input"
+                      type="date"
+                      value={orderDate}
+                      onChange={(e) => setOrderDate(e.target.value)}
+                    />
+                  </label>
+
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <div
+                      className="row"
+                      style={{ justifyContent: "space-between", marginBottom: 8 }}
+                    >
+                      <div style={{ fontWeight: 800 }}>Itens</div>
+
+                      <div className="row" style={{ gap: 8 }}>
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={() => setShowNewProduct((v) => !v)}
+                          disabled={loading}
+                        >
+                          {showNewProduct ? "Fechar cadastro" : "+ Cadastrar produto"}
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn"
+                          onClick={addItemRow}
+                          disabled={loading}
+                        >
+                          + Adicionar item
+                        </button>
+                      </div>
+                    </div>
+
+                    {showNewProduct ? (
+                      <div className="card" style={{ padding: 12, marginBottom: 12 }}>
+                        <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                          <input
+                            className="input"
+                            placeholder="Nome do produto"
+                            value={newProductName}
+                            onChange={(e) => setNewProductName(e.target.value)}
+                            style={{ flex: 1, minWidth: 220 }}
+                          />
+
+                          <input
+                            className="input"
+                            type="number"
+                            placeholder="Preço de venda"
+                            value={newProductSalePrice}
+                            onChange={(e) => setNewProductSalePrice(e.target.value)}
+                            style={{ width: 160 }}
+                          />
+
+                          <input
+                            className="input"
+                            type="number"
+                            placeholder="Custo"
+                            value={newProductCost}
+                            onChange={(e) => setNewProductCost(e.target.value)}
+                            style={{ width: 140 }}
+                          />
+
+                          <button
+                            type="button"
+                            className="btn btnPrimary"
+                            disabled={loading || !newProductName.trim()}
+                            onClick={async () => {
+                              try {
+                                setLoading(true);
+
+                                const res = await ordersApi.createProduct({
+                                  data: {
+                                    name: newProductName.trim(),
+                                    sale_price: Number(newProductSalePrice),
+                                    cost: Number(newProductCost),
+                                  },
+                                });
+
+                                const ok = res?.ok ?? true;
+                                if (!ok) {
+                                  alert("Erro ao criar produto.");
+                                  console.error(res);
+                                  return;
+                                }
+
+                                await loadProducts();
+
+                                setNewProductName("");
+                                setNewProductSalePrice("");
+                                setNewProductCost("");
+
+                                setShowNewProduct(false);
+                              } catch (err) {
+                                console.error(err);
+                                alert("Erro ao criar produto.");
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                          >
+                            Salvar produto
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {(items ?? []).map((it, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "2fr 1fr 1fr 1fr auto",
+                          gap: 10,
+                          marginBottom: 10,
+                          alignItems: "end",
+                        }}
+                      >
+                        <label className="label">
+                          Produto
+                          <input
+                            className="input"
+                            list="products-list"
+                            value={it.item}
+                            onChange={(e) => updateItemRow(idx, "item", e.target.value)}
+                            placeholder="Digite ou selecione um produto"
+                            required
+                          />
+                          <datalist id="products-list">
+                            {products.map((p) => (
+                              <option key={p._id} value={p.name} />
+                            ))}
+                          </datalist>
+                        </label>
+
+                        <label className="label">
+                          Qtd
+                          <input
+                            className="input"
+                            type="number"
+                            min="1"
+                            value={it.quantidade}
+                            onChange={(e) => updateItemRow(idx, "quantidade", e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <label className="label">
+                          Preço
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={it.price}
+                            onChange={(e) => updateItemRow(idx, "price", e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <label className="label">
+                          Custo
+                          <input
+                            className="input"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={it.cost}
+                            onChange={(e) => updateItemRow(idx, "cost", e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <button
+                          type="button"
+                          className="btn btnDanger"
+                          onClick={() => removeItemRow(idx)}
+                          disabled={loading || items.length <= 1}
+                          style={{ height: 42 }}
+                        >
+                          Remover
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="actions">
+                    <button className="btn btnPrimary" type="submit" disabled={loading}>
+                      {loading
+                        ? isEditing
+                          ? "Salvando..."
+                          : "Criando..."
+                        : isEditing
+                        ? "Salvar alterações"
+                        : "Criar pedido"}
+                    </button>
+                  </div>
                 </div>
+              </form>
 
-                <div className="sep"></div>
+              <div className="card" style={{ padding: 12, marginTop: 14 }}>
+                <div className="row" style={{ gap: 10 }}>
+                  <input
+                    className="input"
+                    placeholder="Filtrar por nome..."
+                    value={filterName}
+                    onChange={(e) => setFilterName(e.target.value)}
+                    style={{ flex: 1 }}
+                  />
 
-                <div className="row" style={{ gap: 8 }}>
                   <select
                     className="select"
-                    value={order.status}
-                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                    disabled={loading}
-                    style={{ flex: 1 }}
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    style={{ width: 160 }}
                   >
+                    <option value="">Todos status</option>
                     <option value="confirmed">confirmed</option>
                     <option value="preparing">preparing</option>
                     <option value="sold">sold</option>
                     <option value="cancelled">cancelled</option>
                   </select>
 
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => startEditOrder(order)}
-                    disabled={loading}
-                  >
-                    Editar
+                  <input
+                    className="input"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+
+                  <input
+                    className="input"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+
+                  <button type="button" className="btn btnPrimary" onClick={applyFilter} disabled={loading}>
+                    Filtrar
                   </button>
 
-                  <button
-                    type="button"
-                    className="btn btnDanger"
-                    onClick={() => deleteOrder(order._id)}
-                    disabled={loading}
-                  >
-                    Excluir
+                  <button type="button" className="btn" onClick={clearFilter} disabled={loading}>
+                    Limpar
                   </button>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
 
-export default App;
+              <div className="card" style={{ padding: 12, marginTop: 14 }}>
+                <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                  <button type="button" className="btn" disabled={loading} onClick={() => bulkUpdateStatus("sold")}>
+                    Marcar filtrados como SOLD
+                  </button>
+
+                  <button type="button" className="btn" disabled={loading} onClick={() => bulkUpdateStatus("cancelled")}>
+                    Marcar filtrados como CANCELLED
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={loading}
+                    onClick={() => bulkIncrement("prices.total", 1)}
+                    title="Incrementa prices.total em +1 para os pedidos do filtro atual"
+                  >
+                    +1 em preço total (filtrados)
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={loading}
+                    onClick={() => bulkIncrement("prices.total", -1)}
+                    title="Decrementa prices.total em -1 para os pedidos do filtro atual"
+                  >
+                    -1 em preço total (filtrados)
+                  </button>
+
+                  <button type="button" className="btn btnDanger" disabled={loading} onClick={bulkDelete}>
+                    Apagar filtrados
+                  </button>
+                </div>
+
+                <div className="mini" style={{ marginTop: 8 }}>
+                  Ações em massa usam o filtro atual. Se você não estiver filtrando,
+                  afeta TODOS.
+                </div>
+              </div>
+
+              <div className="card" style={{ padding: 12, marginTop: 14 }}>
+                <div className="row" style={{ gap: 10, alignItems: "center" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    ◀ Anterior
+                  </button>
+
+                  <div className="mini">
+                    Página: <strong>{page}</strong> • Total: <strong>{meta.total}</strong>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={!meta.has_next || loading}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Próxima ▶
+                  </button>
+
+                  <select
+                    className="select"
+                    value={limit}
+                    onChange={(e) => {
+                      setPage(1);
+                      setLimit(Number(e.target.value));
+                    }}
+                    style={{ width: 140, marginLeft: "auto" }}
+                  >
+                    <option value={5}>5 / pág</option>
+                    <option value={10}>10 / pág</option>
+                    <option value={20}>20 / pág</option>
+                    <option value={50}>50 / pág</option>
+                  </select>
+                </div>
+              </div>
+
+              {orders.length === 0 ? (
+                <p className="mini">Nenhum pedido encontrado.</p>
+              ) : (
+                <div className="grid orders">
+                  {orders.map((order) => {
+                    const orderTotal = (order.itens ?? []).reduce(
+                      (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
+                      0
+                    );
+
+                    const orderCost = (order.itens ?? []).reduce(
+                      (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
+                      0
+                    );
+
+                    const orderProfit = order.status === "sold" ? orderTotal - orderCost : 0;
+
+                    return (
+                      <div
+                        key={order._id}
+                        className={`card orderCard status-${order.status || "unknown"}`}
+                      >
+                        <div className="row">
+                          <div style={{ fontWeight: 800 }}>{order.name}</div>
+                          <span className={`pill pill-${order.status || "unknown"}`}>
+                            {String(order.status || "").toUpperCase()}
+                          </span>
+                        </div>
+
+                        <div className="kv">
+                          <div>
+                            <strong>ID:</strong> {order._id}
+                          </div>
+                          <div>
+                            <strong>Data:</strong> {formatDateBR(order.order_date)}
+                          </div>
+                        </div>
+
+                        <div className="sep"></div>
+
+                        <div style={{ marginTop: 8 }}>
+                          <strong>Itens:</strong>
+
+                          {(order.itens ?? []).map((it, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                fontSize: 14,
+                                marginTop: 4,
+                              }}
+                            >
+                              <span>
+                                {it.quantidade}x {it.item}
+                              </span>
+                              <span>
+                                R$ {(Number(it.quantidade) * Number(it.price)).toFixed(2)}
+                              </span>
+                            </div>
+                          ))}
+
+                          <div style={{ marginTop: 8, fontWeight: "bold" }}>
+                            Total: R$ {orderTotal.toFixed(2)}
+                          </div>
+
+                          <div style={{ marginTop: 8 }}>
+                            <div>
+                              <strong>Custo:</strong> R$ {orderCost.toFixed(2)}
+                            </div>
+                            {order.status === "sold" ? (
+                              <div>
+                                <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="sep"></div>
+
+                        <div className="row" style={{ gap: 8 }}>
+                          <select
+                            className="select"
+                            value={order.status}
+                            onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                            disabled={loading}
+                            style={{ flex: 1 }}
+                          >
+                            <option value="confirmed">confirmed</option>
+                            <option value="preparing">preparing</option>
+                            <option value="sold">sold</option>
+                            <option value="cancelled">cancelled</option>
+                          </select>
+
+                          <button
+                            type="button"
+                            className="btn"
+                            onClick={() => startEditOrder(order)}
+                            disabled={loading}
+                          >
+                            Editar
+                          </button>
+
+                          <button
+                            type="button"
+                            className="btn btnDanger"
+                            onClick={() => deleteOrder(order._id)}
+                            disabled={loading}
+                          >
+                            Excluir
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          ) : null}
+
+          {/* ========================= */}
+          {/* ======= CLIENTES ======== */}
+          {/* ========================= */}
+          {activeView === "clients" ? (
+            <div className="card" style={{ padding: 12, marginTop: 14 }}>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontWeight: 800 }}>Clientes</div>
+                <div className="mini">{clients.length} cadastrados</div>
+              </div>
+
+              <div className="sep"></div>
+
+              {editingClientId ? (
+                <div className="card" style={{ padding: 12, marginBottom: 12 }}>
+                  <div className="mini" style={{ marginBottom: 8 }}>
+                    Editando cliente: <strong>{editingClientId}</strong>
+                  </div>
+
+                  <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                    <input
+                      className="input"
+                      placeholder="Nome"
+                      value={editClientName}
+                      onChange={(e) => setEditClientName(e.target.value)}
+                      style={{ flex: 1, minWidth: 220 }}
+                    />
+
+                    <input
+                      className="input"
+                      placeholder="Telefone (opcional)"
+                      value={editClientPhone}
+                      onChange={(e) => setEditClientPhone(e.target.value)}
+                      style={{ width: 220 }}
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btnPrimary"
+                      disabled={loading || !editClientName.trim()}
+                      onClick={saveClientEdit}
+                    >
+                      Salvar
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={loading}
+                      onClick={cancelEditClient}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {clients.length === 0 ? (
+                <div className="mini">Nenhum cliente cadastrado.</div>
+              ) : (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {clients.map((c) => (
+                    <div
+                      key={c._id}
+                      className="card"
+                      style={{
+                        padding: 10,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        alignItems: "center",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{c.name}</div>
+                        <div className="mini">{c.phone ? c.phone : "Sem telefone"}</div>
+                      </div>
+
+                      <div className="row" style={{ gap: 8 }}>
+                        <button
+                          type="button"
+                          className="btn"
+                          disabled={loading}
+                          onClick={() => startEditClient(c)}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn btnDanger"
+                          disabled={loading}
+                          onClick={() => removeClient(c._id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          {/* ========================= */}
+          {/* ======= PRODUTOS ======== */}
+          {/* ========================= */}
+          {activeView === "products" ? (
+            <div className="card" style={{ padding: 12, marginTop: 14 }}>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ fontWeight: 800 }}>Produtos</div>
+                <div className="mini">{products.length} cadastrados</div>
+              </div>
+
+              <div className="sep"></div>
+
+              {editingProductId ? (
+                <div className="card" style={{ padding: 12, marginBottom: 12 }}>
+                  <div className="mini" style={{ marginBottom: 8 }}>
+                    Editando produto: <strong>{editingProductId}</strong>
+                  </div>
+
+                  <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+                    <input
+                      className="input"
+                      placeholder="Nome"
+                      value={editProductName}
+                      onChange={(e) => setEditProductName(e.target.value)}
+                      style={{ flex: 1, minWidth: 220 }}
+                    />
+
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="Preço venda"
+                      value={editProductSalePrice}
+                      onChange={(e) => setEditProductSalePrice(e.target.value)}
+                      style={{ width: 160 }}
+                    />
+
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="Custo"
+                      value={editProductCost}
+                      onChange={(e) => setEditProductCost(e.target.value)}
+                      style={{ width: 140 }}
+                    />
+
+                    <button
+                      type="button"
+                      className="btn btnPrimary"
+                      disabled={loading || !editProductName.trim()}
+                      onClick={saveProductEdit}
+                    >
+                      Salvar
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={loading}
+                      onClick={cancelEditProduct}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {products.length === 0 ? (
+                <div className="mini">Nenhum produto cadastrado.</div>
+              ) : (
+                <div style={{ display: "grid", gap: 8 }}>
+                  {products.map((p) => (
+                    <div
+                      key={p._id}
+                      className="card"
+                      style={{
+                        padding: 10,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        alignItems: "center",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{p.name}</div>
+                        <div className="mini">
+                          Venda:{" "}
+                          <strong>R$ {Number(p.sale_price ?? 0).toFixed(2)}</strong>{" "}
+                          • Custo:{" "}
+                          <strong>R$ {Number(p.cost ?? 0).toFixed(2)}</strong>
+                        </div>
+                      </div>
+
+                      <div className="row" style={{ gap: 8 }}>
+                        <button
+                          type="button"
+                          className="btn"
+                          disabled={loading}
+                          onClick={() => startEditProduct(p)}
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn btnDanger"
+                          disabled={loading}
+                          onClick={() => removeProduct(p._id)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+      );
+    }
+
+    export default App;
