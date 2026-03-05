@@ -1175,7 +1175,10 @@ function App() {
       ) : (
         <div className="grid orders">
           {orders.map((order) => {
-            const orderTotal = Number(order?.prices?.total ?? 0);
+            const orderTotal = (order.itens ?? []).reduce(
+              (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
+              0
+            );
             const orderCost = (order.itens ?? []).reduce(
               (acc, it) =>
                 acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
