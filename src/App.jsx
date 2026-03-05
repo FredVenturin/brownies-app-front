@@ -58,6 +58,11 @@ function App() {
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [editingProductId, setEditingProductId] = useState(null);
+  const [editProductName, setEditProductName] = useState("");
+  const [editProductSalePrice, setEditProductSalePrice] = useState("");
+  const [editProductCost, setEditProductCost] = useState("");
+
   const [editingClientId, setEditingClientId] = useState(null);
   const [editClientName, setEditClientName] = useState("");
   const [editClientPhone, setEditClientPhone] = useState("");
@@ -182,6 +187,74 @@ function App() {
     return payload?.data?.count ?? payload?.data?.attributes?.count ?? 0;
   }
 
+  function startEditProduct(product) {
+  setEditingProductId(product._id);
+  setEditProductName(product.name ?? "");
+  setEditProductSalePrice(String(product.sale_price ?? ""));
+  setEditProductCost(String(product.cost ?? ""));
+}
+
+function cancelEditProduct() {
+  setEditingProductId(null);
+  setEditProductName("");
+  setEditProductSalePrice("");
+  setEditProductCost("");
+}
+
+async function saveProductEdit() {
+  if (!editingProductId) return;
+
+  setLoading(true);
+  try {
+    const res = await ordersApi.updateProduct(editingProductId, {
+      data: {
+        name: editProductName.trim(),
+        sale_price: Number(editProductSalePrice),
+        cost: Number(editProductCost),
+      },
+    });
+
+    const ok = res?.ok ?? true;
+    if (!ok) {
+      alert("Erro ao atualizar produto.");
+      console.error(res);
+      return;
+    }
+
+    await loadProducts();
+    cancelEditProduct();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao atualizar produto (veja o console).");
+  } finally {
+    setLoading(false);
+  }
+}
+
+  async function removeProduct(productId) {
+    const ok = confirm("Tem certeza que deseja excluir este produto?");
+    if (!ok) return;
+
+    setLoading(true);
+    try {
+      const res = await ordersApi.deleteProduct(productId);
+
+      const okRes = res?.ok ?? true;
+      if (!okRes) {
+        alert("Erro ao excluir produto.");
+        console.error(res);
+        return;
+      }
+
+      await loadProducts();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao excluir produto (veja o console).");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function loadProducts() {
     try {
       const res = await ordersApi.listProducts();
@@ -193,6 +266,7 @@ function App() {
     }
   }
 
+
   async function loadClients() {
     try {
       const res = await ordersApi.listClients();
@@ -203,6 +277,8 @@ function App() {
       console.error(err);
     }
   }
+
+  
 
   async function loadOrdersPaginated() {
     const res = isFiltered
@@ -1321,6 +1397,111 @@ function App() {
                     className="btn btnDanger"
                     disabled={loading}
                     onClick={() => removeClient(c._id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: 12, marginTop: 14 }}>
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontWeight: 800 }}>Produtos</div>
+          <div className="mini">{products.length} cadastrados</div>
+        </div>
+
+        <div className="sep"></div>
+
+        {editingProductId ? (
+          <div className="card" style={{ padding: 12, marginBottom: 12 }}>
+            <div className="mini" style={{ marginBottom: 8 }}>
+              Editando produto: <strong>{editingProductId}</strong>
+            </div>
+
+            <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+              <input
+                className="input"
+                placeholder="Nome"
+                value={editProductName}
+                onChange={(e) => setEditProductName(e.target.value)}
+                style={{ flex: 1, minWidth: 220 }}
+              />
+
+              <input
+                className="input"
+                type="number"
+                placeholder="Preço venda"
+                value={editProductSalePrice}
+                onChange={(e) => setEditProductSalePrice(e.target.value)}
+                style={{ width: 160 }}
+              />
+
+              <input
+                className="input"
+                type="number"
+                placeholder="Custo"
+                value={editProductCost}
+                onChange={(e) => setEditProductCost(e.target.value)}
+                style={{ width: 140 }}
+              />
+
+              <button
+                type="button"
+                className="btn btnPrimary"
+                disabled={loading || !editProductName.trim()}
+                onClick={saveProductEdit}
+              >
+                Salvar
+              </button>
+
+              <button
+                type="button"
+                className="btn"
+                disabled={loading}
+                onClick={cancelEditProduct}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {products.length === 0 ? (
+          <div className="mini">Nenhum produto cadastrado.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 8 }}>
+            {products.map((p) => (
+              <div
+                key={p._id}
+                className="card"
+                style={{ padding: 10, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700 }}>{p.name}</div>
+                  <div className="mini">
+                    Venda: <strong>R$ {Number(p.sale_price ?? 0).toFixed(2)}</strong>
+                    {" "}• Custo: <strong>R$ {Number(p.cost ?? 0).toFixed(2)}</strong>
+                  </div>
+                </div>
+
+                <div className="row" style={{ gap: 8 }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={loading}
+                    onClick={() => startEditProduct(p)}
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btnDanger"
+                    disabled={loading}
+                    onClick={() => removeProduct(p._id)}
                   >
                     Excluir
                   </button>
