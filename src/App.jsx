@@ -99,7 +99,7 @@ function App() {
   const [name, setName] = useState("");
   const [clients, setClients] = useState([]);
   const [newClientName, setNewClientName] = useState("");
-  const [items, setItems] = useState([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
+  const [items, setItems] = useState([{ item: "", quantidade: 1, price: 0, cost: 0 }]);
   const [status, setStatus] = useState("confirmed");
 
   const [startDate, setStartDate] = useState("");
@@ -370,7 +370,7 @@ function App() {
     setEditingOrderId(null);
 
     setName("");
-    setItems([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
+    setItems([{ item: "", quantidade: 1, price: 0, cost: 0 }]);
     setStatus("confirmed");
     setOrderDate(todayISO);
 
@@ -461,7 +461,7 @@ function App() {
       }
 
       setName("");
-      setItems([{ item: "brownie", quantidade: 1, price: 10, cost: 5 }]);
+      setItems([{ item: "", quantidade: 1, price: 0, cost: 0 }]);
       setStatus("confirmed");
       setOrderDate(todayISO);
 
