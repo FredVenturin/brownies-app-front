@@ -75,6 +75,7 @@ function App() {
     total: 0,
     confirmed: 0,
     preparing: 0,
+    packed: 0,
     sold: 0,
     cancelled: 0,
   });
@@ -375,19 +376,21 @@ async function saveProductEdit() {
   }
 
   async function loadStats() {
-    const statuses = ["confirmed", "preparing", "sold", "cancelled"];
+    const statuses = ["confirmed", "preparing", "packed", "sold", "cancelled"];
     const results = await Promise.all([ordersApi.count(), ...statuses.map((s) => ordersApi.count({ status: s }))]);
 
     const totalPayload = results[0]?.payload ?? results[0];
     const confirmedPayload = results[1]?.payload ?? results[1];
     const preparingPayload = results[2]?.payload ?? results[2];
-    const soldPayload = results[3]?.payload ?? results[3];
-    const cancelledPayload = results[4]?.payload ?? results[4];
+    const packedPayload = results[3]?.payload ?? results[3];
+    const soldPayload = results[4]?.payload ?? results[4];
+    const cancelledPayload = results[5]?.payload ?? results[5];
 
     setStats({
       total: getCount(totalPayload),
       confirmed: getCount(confirmedPayload),
       preparing: getCount(preparingPayload),
+      packed: getCount(packedPayload),
       sold: getCount(soldPayload),
       cancelled: getCount(cancelledPayload),
     });
@@ -887,6 +890,11 @@ async function saveProductEdit() {
                 </div>
 
                 <div className="card statCard">
+                  <div className="statValue">{stats.packed}</div>
+                  <div className="statLabel">Packed</div>
+                </div>
+
+                <div className="card statCard">
                   <div className="statValue">{stats.sold}</div>
                   <div className="statLabel">Sold</div>
                 </div>
@@ -1032,6 +1040,7 @@ async function saveProductEdit() {
                     >
                       <option value="confirmed">confirmed</option>
                       <option value="preparing">preparing</option>
+                      <option value="packed">packed</option>
                       <option value="sold">sold</option>
                       <option value="cancelled">cancelled</option>
                     </select>
@@ -1260,6 +1269,7 @@ async function saveProductEdit() {
                     <option value="">Todos status</option>
                     <option value="confirmed">confirmed</option>
                     <option value="preparing">preparing</option>
+                    <option value="packed">packed</option>
                     <option value="sold">sold</option>
                     <option value="cancelled">cancelled</option>
                   </select>
@@ -1460,6 +1470,7 @@ async function saveProductEdit() {
                           >
                             <option value="confirmed">confirmed</option>
                             <option value="preparing">preparing</option>
+                            <option value="packed">packed</option>
                             <option value="sold">sold</option>
                             <option value="cancelled">cancelled</option>
                           </select>
