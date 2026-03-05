@@ -1,316 +1,330 @@
 :root{
---bg: #fefff4;
+  --bg: #fefff4;
 
---card: rgba(87, 3, 1, .08);
---card2: rgba(246, 186, 214, .35);
---stroke: rgba(87, 3, 1, .28);
+  --card: rgba(87, 3, 1, .08);
+  --card2: rgba(246, 186, 214, .35);
+  --stroke: rgba(87, 3, 1, .28);
 
---text: rgba(87, 3, 1, .97);
---muted: rgba(87, 3, 1, .72);
+  --text: rgba(87, 3, 1, .97);
+  --muted: rgba(87, 3, 1, .72);
 
---confirmed: #f8e593;
---preparing: #bbd6fd;
---sold: #ec8d5f;
---cancelled: #f6bad6;
+  --confirmed: #f8e593;
+  --preparing: #bbd6fd;
+  --packed: #bbd6fd; /* novo (pode manter igual preparing ou trocar depois) */
+  --sold: #ec8d5f;
+  --cancelled: #f6bad6;
 
---shadow: 0 14px 38px rgba(87, 3, 1, .20);
---radius: 16px;
+  --shadow: 0 14px 38px rgba(87, 3, 1, .20);
+  --radius: 16px;
 
---focus: rgba(187, 214, 253, .95);
---focusRing: rgba(187, 214, 253, .30);
+  --focus: rgba(187, 214, 253, .95);
+  --focusRing: rgba(187, 214, 253, .30);
 }
 
 *{ box-sizing: border-box; }
 
 body{
-margin:0;
-font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  margin:0;
+  font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
 
-background:
-radial-gradient(1200px 600px at 20% 10%, rgba(187,214,253,.20), transparent 55%),
-radial-gradient(1200px 600px at 80% 0%, rgba(246,186,214,.18), transparent 58%),
-radial-gradient(900px 520px at 55% 85%, rgba(248,229,147,.18), transparent 62%),
-radial-gradient(900px 520px at 10% 90%, rgba(236,141,95,.14), transparent 65%),
-linear-gradient(180deg, rgba(87,3,1,.05), rgba(87,3,1,.02)),
-var(--bg);
+  background:
+    radial-gradient(1200px 600px at 20% 10%, rgba(187,214,253,.20), transparent 55%),
+    radial-gradient(1200px 600px at 80% 0%, rgba(246,186,214,.18), transparent 58%),
+    radial-gradient(900px 520px at 55% 85%, rgba(248,229,147,.18), transparent 62%),
+    radial-gradient(900px 520px at 10% 90%, rgba(236,141,95,.14), transparent 65%),
+    linear-gradient(180deg, rgba(87,3,1,.05), rgba(87,3,1,.02)),
+    var(--bg);
 
-color: var(--text);
+  color: var(--text);
 }
 
 h1, h2, h3{
-font-family: "Knewave", cursive;
-letter-spacing: .2px;
+  font-family: "Knewave", cursive;
+  letter-spacing: .2px;
 }
 
 /* container */
 
 .container{
-max-width: 980px;
-margin: 0 auto;
-padding: 22px 16px 40px;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 22px 16px 40px;
 }
 
 /* header */
 
 .header{
-display:flex;
-align-items:flex-end;
-justify-content:space-between;
-gap:16px;
-margin-bottom: 16px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom: 16px;
 }
 
 .title{
-font-size: 28px;
-letter-spacing: -0.5px;
-margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.5px;
+  margin: 0;
 }
 
 .subtitle{
-margin: 6px 0 0;
-color: var(--muted);
-font-size: 13px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 /* grids */
 
 .grid{
-display:grid;
-gap: 12px;
+  display:grid;
+  gap: 12px;
 }
 
 .stats{
-grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-margin: 14px 0 18px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin: 14px 0 18px;
 }
 
 /* cards */
 
 .card{
-background: linear-gradient(180deg, rgba(246,186,214,.40), rgba(87,3,1,.04));
-border: 1px solid var(--stroke);
-border-radius: var(--radius);
-box-shadow: var(--shadow);
-backdrop-filter: blur(2px);
+  background: linear-gradient(180deg, rgba(246,186,214,.40), rgba(87,3,1,.04));
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(2px);
 }
 
 /* stats */
 
 .statCard{
-padding: 14px 14px 12px;
+  padding: 14px 14px 12px;
 }
 
 .statValue{
-font-size: 26px;
-font-weight: 800;
-letter-spacing: -0.8px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
 }
 
 .statLabel{
-margin-top: 4px;
-font-size: 12px;
-color: var(--muted);
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 /* rows */
 
 .row{
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
 
 /* pills */
 
 .pill{
-display:inline-flex;
-align-items:center;
-gap:8px;
-padding: 6px 10px;
-border-radius: 999px;
-font-size: 12px;
-font-weight: 800;
-border: 1px solid rgba(87,3,1,.28);
-background: rgba(255,255,255,.85);
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  border: 1px solid rgba(87,3,1,.28);
+  background: rgba(255,255,255,.85);
 }
 
 .dot{
-width:10px;
-height:10px;
-border-radius:999px;
+  width:10px;
+  height:10px;
+  border-radius:999px;
 }
 
 .dot.confirmed{ background: var(--confirmed); }
 .dot.preparing{ background: var(--preparing); }
+.dot.packed{ background: var(--packed); } /* novo */
 .dot.sold{ background: var(--sold); }
 .dot.cancelled{ background: var(--cancelled); }
 
 /* form */
 
 .form{
-padding: 16px;
-margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
 .formGrid{
-display:grid;
-grid-template-columns: repeat(2, 1fr);
-gap: 12px;
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
 @media (max-width: 700px){
-.formGrid{ grid-template-columns: 1fr; }
-.header{ flex-direction:column; align-items:flex-start; }
+  .formGrid{ grid-template-columns: 1fr; }
+  .header{ flex-direction:column; align-items:flex-start; }
 }
 
 .label{
-display:flex;
-flex-direction:column;
-gap: 6px;
-font-size: 12px;
-color: var(--muted);
+  display:flex;
+  flex-direction:column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 /* inputs */
 
 .input, .select{
-background: rgba(255,255,255,.94);
-border: 1px solid rgba(87,3,1,.30);
-border-radius: 12px;
-padding: 10px 12px;
-color: var(--text);
-outline: none;
+  background: rgba(255,255,255,.94);
+  border: 1px solid rgba(87,3,1,.30);
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text);
+  outline: none;
 }
 
 .input::placeholder{
-color: rgba(87,3,1,.45);
+  color: rgba(87,3,1,.45);
 }
 
 .input:focus, .select:focus{
-border-color: var(--focus);
-box-shadow: 0 0 0 3px var(--focusRing);
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focusRing);
 }
 
 /* buttons */
 
 .actions{
-display:flex;
-gap: 10px;
-align-items:flex-end;
-flex-wrap: wrap;
+  display:flex;
+  gap: 10px;
+  align-items:flex-end;
+  flex-wrap: wrap;
 }
 
 .btn{
-cursor:pointer;
-border: 1px solid rgba(87,3,1,.25);
-background: rgba(255,255,255,.92);
-color: var(--text);
-padding: 10px 12px;
-border-radius: 12px;
-font-weight: 800;
+  cursor:pointer;
+  border: 1px solid rgba(87,3,1,.25);
+  background: rgba(255,255,255,.92);
+  color: var(--text);
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-weight: 800;
 }
 
 .btn:hover{
-transform: translateY(-1px);
+  transform: translateY(-1px);
 }
 
 .btnPrimary{
-background: linear-gradient(180deg, rgba(87,3,1,.96), rgba(87,3,1,.78));
-border: none;
-color: #fefff4;
+  background: linear-gradient(180deg, rgba(87,3,1,.96), rgba(87,3,1,.78));
+  border: none;
+  color: #fefff4;
 }
 
 .btnDanger{
-background: rgba(246,186,214,.45);
-border: 1px solid rgba(87,3,1,.28);
+  background: rgba(246,186,214,.45);
+  border: 1px solid rgba(87,3,1,.28);
 }
 
 .btn:disabled{
-opacity: .6;
-cursor: not-allowed;
-transform: none;
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* orders */
 
 .orders{
-grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .orderCard{
-padding: 14px;
+  padding: 14px;
 }
 
 /* key values */
 
 .kv{
-display:grid;
-gap: 6px;
-margin-top: 10px;
-color: var(--muted);
-font-size: 12px;
+  display:grid;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .kv strong{
-color: var(--text);
+  color: var(--text);
 }
 
 .mini{
-font-size: 12px;
-color: var(--muted);
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .sep{
-height:1px;
-background: rgba(87,3,1,.14);
-margin: 12px 0;
+  height:1px;
+  background: rgba(87,3,1,.14);
+  margin: 12px 0;
 }
 
 /* ===== status cards ===== */
 
 .orderCard.status-confirmed{
-border-color: rgba(248, 229, 147, .80);
-background: linear-gradient(180deg, rgba(248, 229, 147, .32), rgba(87,3,1,.05));
+  border-color: rgba(248, 229, 147, .80);
+  background: linear-gradient(180deg, rgba(248, 229, 147, .32), rgba(87,3,1,.05));
 }
 
 .orderCard.status-preparing{
-border-color: rgba(187, 214, 253, .80);
-background: linear-gradient(180deg, rgba(187, 214, 253, .32), rgba(87,3,1,.05));
+  border-color: rgba(187, 214, 253, .80);
+  background: linear-gradient(180deg, rgba(187, 214, 253, .32), rgba(87,3,1,.05));
+}
+
+/* novo: packed */
+.orderCard.status-packed{
+  border-color: rgba(187, 214, 253, .90);
+  background: linear-gradient(180deg, rgba(187, 214, 253, .40), rgba(87,3,1,.05));
 }
 
 .orderCard.status-sold{
-border-color: rgba(236, 141, 95, .75);
-background: linear-gradient(180deg, rgba(236, 141, 95, .30), rgba(87,3,1,.05));
+  border-color: rgba(236, 141, 95, .75);
+  background: linear-gradient(180deg, rgba(236, 141, 95, .30), rgba(87,3,1,.05));
 }
 
 .orderCard.status-cancelled{
-border-color: rgba(246, 186, 214, .80);
-background: linear-gradient(180deg, rgba(246, 186, 214, .34), rgba(87,3,1,.05));
+  border-color: rgba(246, 186, 214, .80);
+  background: linear-gradient(180deg, rgba(246, 186, 214, .34), rgba(87,3,1,.05));
 }
 
 .orderCard.status-unknown{
-border-color: rgba(87,3,1,.20);
+  border-color: rgba(87,3,1,.20);
 }
 
 /* ===== status pills ===== */
 
 .pill-confirmed{
-border-color: rgba(248,229,147,.75);
-background: rgba(248,229,147,.35);
+  border-color: rgba(248,229,147,.75);
+  background: rgba(248,229,147,.35);
 }
 
 .pill-preparing{
-border-color: rgba(187,214,253,.75);
-background: rgba(187,214,253,.35);
+  border-color: rgba(187,214,253,.75);
+  background: rgba(187,214,253,.35);
+}
+
+/* novo: packed */
+.pill-packed{
+  border-color: rgba(187,214,253,.80);
+  background: rgba(187,214,253,.40);
 }
 
 .pill-sold{
-border-color: rgba(236,141,95,.70);
-background: rgba(236,141,95,.32);
+  border-color: rgba(236,141,95,.70);
+  background: rgba(236,141,95,.32);
 }
 
 .pill-cancelled{
-border-color: rgba(246,186,214,.75);
-background: rgba(246,186,214,.35);
+  border-color: rgba(246,186,214,.75);
+  background: rgba(246,186,214,.35);
 }
