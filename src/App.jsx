@@ -251,6 +251,8 @@ function App() {
       const res = await ordersApi.profitSummary();
       const payload = res?.payload ?? res;
 
+      console.log("PROFIT_SUMMARY response:", payload);
+
       const attrs =
         payload?.data?.attributes ?? {
           daily: { revenue: 0, cost: 0, profit: 0 },
