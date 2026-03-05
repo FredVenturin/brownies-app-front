@@ -531,16 +531,9 @@ function App() {
     await reloadAll();
   }
 
-  const soldOrders = orders.filter((o) => o.status === "sold");
-
-  const revenue = soldOrders.reduce((acc, o) => acc + Number(o?.prices?.total ?? 0), 0);
-
-  const totalCost = soldOrders.reduce((acc, o) => {
-    const orderCost = (o.itens ?? []).reduce((a, it) => a + Number(it.quantidade ?? 0) * Number(it.cost ?? 0), 0);
-    return acc + orderCost;
-  }, 0);
-
-  const profit = revenue - totalCost;
+  const revenue = Number(profitSummary?.annual?.revenue ?? 0);
+  const totalCost = Number(profitSummary?.annual?.cost ?? 0);
+  const profit = Number(profitSummary?.annual?.profit ?? 0);
 
   const orderTotalPreview = items.reduce((acc, it) => acc + Number(it.quantidade || 0) * Number(it.price || 0), 0);
 
