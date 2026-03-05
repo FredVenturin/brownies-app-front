@@ -1,52 +1,142 @@
-:root {
-  --bg: #fefff4;
-  --primary: #570301;
-  --secondary: #ec8d5f;
-  --accent: #f6bad6;
-  --info: #bbd6fd;
-  --highlight: #f8e593;
+:root{
+--bg: #fefff4;
 
-  --text: #570301;
-  --card-bg: #ffffff;
-  --border: #ec8d5f33;
+--card: rgba(87, 3, 1, .04);
+--card2: rgba(246, 186, 214, .22);
+--stroke: rgba(236, 141, 95, .35);
+
+--text: rgba(87, 3, 1, .92);
+--muted: rgba(87, 3, 1, .62);
+
+--confirmed: #f8e593;
+--preparing: #bbd6fd;
+--sold: #ec8d5f;
+--cancelled: #f6bad6;
+
+--shadow: 0 10px 30px rgba(87, 3, 1, .14);
+--radius: 16px;
 }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "Bricolage Grotesque", sans-serif;
-  margin: 0;
+body{
+margin:0;
+background: var(--bg);
+color: var(--text);
+font-family: "Bricolage Grotesque", sans-serif;
 }
 
-button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
+h1, h2, h3{
+font-family: "Knewave", cursive;
+letter-spacing: 1px;
 }
 
-button:hover {
-  opacity: 0.9;
+/* layout */
+
+.container{
+max-width:1200px;
+margin:auto;
+padding:24px;
 }
 
-input, select {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px;
+/* cards */
+
+.card{
+background: var(--card);
+border:1px solid var(--stroke);
+border-radius: var(--radius);
+padding:20px;
+box-shadow: var(--shadow);
+margin-bottom:20px;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
+/* inputs */
+
+input, select{
+border:1px solid var(--stroke);
+border-radius:8px;
+padding:8px;
+font-family: inherit;
+background:white;
 }
 
-th {
-  background: var(--accent);
+/* buttons */
+
+button{
+border:none;
+border-radius:8px;
+padding:8px 14px;
+background:#570301;
+color:white;
+cursor:pointer;
+font-weight:500;
 }
 
-td, th {
-  border: 1px solid var(--border);
-  padding: 6px;
+button:hover{
+opacity:.9;
+}
+
+/* table */
+
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+border-radius:var(--radius);
+overflow:hidden;
+}
+
+th{
+background:var(--card2);
+text-align:left;
+padding:10px;
+font-weight:600;
+}
+
+td{
+padding:10px;
+border-top:1px solid var(--stroke);
+}
+
+/* status */
+
+.status{
+padding:4px 10px;
+border-radius:999px;
+font-size:12px;
+font-weight:600;
+}
+
+.status-confirmed{
+background:var(--confirmed);
+}
+
+.status-preparing{
+background:var(--preparing);
+}
+
+.status-sold{
+background:var(--sold);
+color:white;
+}
+
+.status-cancelled{
+background:var(--cancelled);
+}
+
+/* pagination */
+
+.pagination{
+display:flex;
+gap:8px;
+margin-top:16px;
+}
+
+.pagination button{
+background:white;
+color:var(--text);
+border:1px solid var(--stroke);
+}
+
+.pagination button.active{
+background:#570301;
+color:white;
 }
