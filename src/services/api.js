@@ -85,6 +85,12 @@ export const ordersApi = {
   profitSummary: () => request("/delivery/profit/summary"),
   deleteMany: (body) => request(`/delivery/orders/delete-many`, { method: "DELETE", body }),
 
+  updateClient: (clientId, body) => request(`/delivery/clients/${clientId}`, { method: "PATCH", body }),
+  deleteClient: (clientId) => request(`/delivery/clients/${clientId}`, { method: "DELETE" }),
+
+  updateProduct: (productId, body) => request(`/delivery/products/${productId}`, { method: "PATCH", body }),
+  deleteProduct: (productId) => request(`/delivery/products/${productId}`, { method: "DELETE" }),
+
   // Opcional mas MUITO recomendado: para parar de usar fetch direto no App.jsx
   create: (body) => request(`/delivery/order`, { method: "POST", body }),
   deleteOne: (id) => request(`/delivery/order/${id}`, { method: "DELETE" }),

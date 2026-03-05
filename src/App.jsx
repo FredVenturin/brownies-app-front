@@ -58,6 +58,10 @@ function App() {
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  const [editingClientId, setEditingClientId] = useState(null);
+  const [editClientName, setEditClientName] = useState("");
+  const [editClientPhone, setEditClientPhone] = useState("");
+
   const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
   const [stats, setStats] = useState({
@@ -225,6 +229,71 @@ function App() {
         has_next: list.length === limit,
       }
     );
+  }
+
+  function startEditClient(client) {
+    setEditingClientId(client._id);
+    setEditClientName(client.name ?? "");
+    setEditClientPhone(client.phone ?? "");
+  }
+
+  function cancelEditClient() {
+    setEditingClientId(null);
+    setEditClientName("");
+    setEditClientPhone("");
+  }
+
+  async function saveClientEdit() {
+    if (!editingClientId) return;
+
+    setLoading(true);
+    try {
+      const res = await ordersApi.updateClient(editingClientId, {
+        data: {
+          name: editClientName.trim(),
+          phone: editClientPhone.trim() || null,
+        },
+      });
+
+      const ok = res?.ok ?? true;
+      if (!ok) {
+        alert("Erro ao atualizar cliente.");
+        console.error(res);
+        return;
+      }
+
+      await loadClients();
+      cancelEditClient();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao atualizar cliente (veja o console).");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function removeClient(clientId) {
+    const ok = confirm("Tem certeza que deseja excluir este cliente?");
+    if (!ok) return;
+
+    setLoading(true);
+    try {
+      const res = await ordersApi.deleteClient(clientId);
+
+      const okRes = res?.ok ?? true;
+      if (!okRes) {
+        alert("Erro ao excluir cliente.");
+        console.error(res);
+        return;
+      }
+
+      await loadClients();
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao excluir cliente (veja o console).");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadStats() {
@@ -1168,6 +1237,98 @@ function App() {
             <option value={50}>50 / pág</option>
           </select>
         </div>
+      </div>
+      
+      <div className="card" style={{ padding: 12, marginTop: 14 }}>
+        <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ fontWeight: 800 }}>Clientes</div>
+          <div className="mini">{clients.length} cadastrados</div>
+        </div>
+
+        <div className="sep"></div>
+
+        {editingClientId ? (
+          <div className="card" style={{ padding: 12, marginBottom: 12 }}>
+            <div className="mini" style={{ marginBottom: 8 }}>
+              Editando cliente: <strong>{editingClientId}</strong>
+            </div>
+
+            <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+              <input
+                className="input"
+                placeholder="Nome"
+                value={editClientName}
+                onChange={(e) => setEditClientName(e.target.value)}
+                style={{ flex: 1, minWidth: 220 }}
+              />
+
+              <input
+                className="input"
+                placeholder="Telefone (opcional)"
+                value={editClientPhone}
+                onChange={(e) => setEditClientPhone(e.target.value)}
+                style={{ width: 220 }}
+              />
+
+              <button
+                type="button"
+                className="btn btnPrimary"
+                disabled={loading || !editClientName.trim()}
+                onClick={saveClientEdit}
+              >
+                Salvar
+              </button>
+
+              <button
+                type="button"
+                className="btn"
+                disabled={loading}
+                onClick={cancelEditClient}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {clients.length === 0 ? (
+          <div className="mini">Nenhum cliente cadastrado.</div>
+        ) : (
+          <div style={{ display: "grid", gap: 8 }}>
+            {clients.map((c) => (
+              <div
+                key={c._id}
+                className="card"
+                style={{ padding: 10, display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700 }}>{c.name}</div>
+                  <div className="mini">{c.phone ? c.phone : "Sem telefone"}</div>
+                </div>
+
+                <div className="row" style={{ gap: 8 }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={loading}
+                    onClick={() => startEditClient(c)}
+                  >
+                    Editar
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn btnDanger"
+                    disabled={loading}
+                    onClick={() => removeClient(c._id)}
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {orders.length === 0 ? (
