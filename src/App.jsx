@@ -137,6 +137,86 @@ function App() {
 
   const STATUS_ORDER = ["confirmed", "preparing", "packed", "cancelled", "sold"];
 
+  const pagedGroupedOrders = useMemo(() => {
+    if (groupBy === "none") return groupedOrders;
+
+    let remainingToSkip = (page - 1) * limit;
+    let remainingToTake = limit;
+    const result = [];
+
+    for (const group of groupedOrders) {
+      if (remainingToTake <= 0) break;
+
+      if ("groups" in group) {
+        const newSubgroups = [];
+
+        for (const subgroup of group.groups) {
+          if (remainingToTake <= 0) break;
+
+          const items = subgroup.items ?? [];
+          const start = Math.min(remainingToSkip, items.length);
+          const available = items.length - start;
+          const take = Math.min(remainingToTake, available);
+
+          if (take > 0) {
+            newSubgroups.push({
+              ...subgroup,
+              items: items.slice(start, start + take),
+            });
+            remainingToTake -= take;
+          }
+
+          remainingToSkip = Math.max(0, remainingToSkip - items.length);
+        }
+
+        if (newSubgroups.length > 0) {
+          result.push({
+            ...group,
+            groups: newSubgroups,
+          });
+        }
+      } else {
+        const items = group.items ?? [];
+        const start = Math.min(remainingToSkip, items.length);
+        const available = items.length - start;
+        const take = Math.min(remainingToTake, available);
+
+        if (take > 0) {
+          result.push({
+            ...group,
+            items: items.slice(start, start + take),
+          });
+          remainingToTake -= take;
+        }
+
+        remainingToSkip = Math.max(0, remainingToSkip - items.length);
+      }
+    }
+
+    return result;
+  }, [groupedOrders, groupBy, page, limit]);
+
+  const groupedTotalItems = useMemo(() => {
+    if (groupBy === "none") return meta.total;
+
+    return groupedOrders.reduce((acc, group) => {
+      if ("groups" in group) {
+        return (
+          acc +
+          group.groups.reduce(
+            (subAcc, subgroup) => subAcc + (subgroup.items?.length ?? 0),
+            0
+          )
+        );
+      }
+
+      return acc + (group.items?.length ?? 0);
+    }, 0);
+  }, [groupedOrders, groupBy, meta.total]);
+
+  const groupedHasNext = page * limit < groupedTotalItems;
+
+
   const groupedOrders = useMemo(() => {
     if (groupBy === "none") {
       return [{
@@ -144,6 +224,8 @@ function App() {
         items: Array.isArray(orders) ? orders : []
       }];
     }
+
+    
 
     const list =
       Array.isArray(allOrders) && allOrders.length > 0
@@ -1540,13 +1622,15 @@ async function saveProductEdit() {
                     </button>
 
                     <div className="mini">
-                      Página: <strong>{page}</strong> • Total: <strong>{meta.total}</strong>
+                      Página: <strong>{page}</strong> • Total:{" "}
+                      <strong>{groupBy === "none" ? meta.total : groupedTotalItems}</strong>
+                      {groupBy !== "none" ? " • Paginação após agrupamento" : ""}
                     </div>
 
                     <button
                       type="button"
                       className="btn"
-                      disabled={!meta.has_next || loading}
+                      disabled={groupBy === "none" ? !meta.has_next || loading : !groupedHasNext || loading}
                       onClick={() => setPage((p) => p + 1)}
                     >
                       Próxima ▶
@@ -1580,7 +1664,7 @@ async function saveProductEdit() {
                 <p className="mini">Nenhum pedido encontrado.</p>
               ) : (
                 <div style={{ display: "grid", gap: 18 }}>
-                  {groupedOrders.map((group, groupIndex) => (
+                  {pagedGroupedOrders.map((group, groupIndex) => (
                     <div key={`${group.label}-${groupIndex}`} className="card" style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 10 }}>
                         {String(group.label || "").toUpperCase()}
