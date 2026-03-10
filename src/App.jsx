@@ -217,9 +217,22 @@ function App() {
     if (groupBy === GROUP_MODES.NAME) {
       return groupFlat(
         list,
-        (order) => String(order?.name || "Sem nome"),
+        (order) => {
+          const raw = String(order?.name || "").trim();
+          return raw ? raw.toLowerCase() : "sem nome";
+        },
         sortByName
-      );
+      ).map((group) => ({
+        ...group,
+        label:
+          group.label === "sem nome"
+            ? "Sem nome"
+            : group.label
+                .split(" ")
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" "),
+      }));
     }
 
     if (groupBy === GROUP_MODES.DATE) {
