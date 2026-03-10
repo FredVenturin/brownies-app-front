@@ -1519,46 +1519,54 @@ async function saveProductEdit() {
                 </div>
               </div>
 
-              <div className="card" style={{ padding: 12, marginTop: 14 }}>
-                <div className="row" style={{ gap: 10, alignItems: "center" }}>
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={page <= 1 || loading}
-                    onClick={() => setPage((p) => p - 1)}
-                  >
-                    ◀ Anterior
-                  </button>
+              {allOrders.length === 0 ? (
+                <div className="card" style={{ padding: 12, marginTop: 14 }}>
+                  <div className="row" style={{ gap: 10, alignItems: "center" }}>
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={page <= 1 || loading}
+                      onClick={() => setPage((p) => p - 1)}
+                    >
+                      ◀ Anterior
+                    </button>
 
-                  <div className="mini">
-                    Página: <strong>{page}</strong> • Total: <strong>{meta.total}</strong>
+                    <div className="mini">
+                      Página: <strong>{page}</strong> • Total: <strong>{meta.total}</strong>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn"
+                      disabled={!meta.has_next || loading}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      Próxima ▶
+                    </button>
+
+                    <select
+                      className="select"
+                      value={limit}
+                      onChange={(e) => {
+                        setPage(1);
+                        setLimit(Number(e.target.value));
+                      }}
+                      style={{ width: 140, marginLeft: "auto" }}
+                    >
+                      <option value={5}>5 / pág</option>
+                      <option value={10}>10 / pág</option>
+                      <option value={20}>20 / pág</option>
+                      <option value={50}>50 / pág</option>
+                    </select>
                   </div>
-
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={!meta.has_next || loading}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    Próxima ▶
-                  </button>
-
-                  <select
-                    className="select"
-                    value={limit}
-                    onChange={(e) => {
-                      setPage(1);
-                      setLimit(Number(e.target.value));
-                    }}
-                    style={{ width: 140, marginLeft: "auto" }}
-                  >
-                    <option value={5}>5 / pág</option>
-                    <option value={10}>10 / pág</option>
-                    <option value={20}>20 / pág</option>
-                    <option value={50}>50 / pág</option>
-                  </select>
                 </div>
-              </div>
+              ) : (
+                <div className="card" style={{ padding: 12, marginTop: 14 }}>
+                  <div className="mini">
+                    Agrupamento ativo: exibindo todos os pedidos do filtro atual.
+                  </div>
+                </div>
+              )}
 
               {orders.length === 0 ? (
                 <p className="mini">Nenhum pedido encontrado.</p>
