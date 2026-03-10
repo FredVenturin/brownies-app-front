@@ -1566,7 +1566,7 @@ async function saveProductEdit() {
               </form>
 
               <div className="card" style={{ padding: 12, marginTop: 14 }}>
-                <div className="row" style={{ gap: 10 }}>
+                <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                   <input
                     className="input"
                     placeholder="Filtrar por nome..."
