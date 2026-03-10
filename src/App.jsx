@@ -147,103 +147,25 @@ function App() {
       }];
     }
 
-  const pagedGroupedOrders = useMemo(() => {
-    if (groupBy === "none") return groupedOrders;
-
-    let remainingToSkip = (page - 1) * limit;
-    let remainingToTake = limit;
-    const result = [];
-
-    for (const group of groupedOrders) {
-      if (remainingToTake <= 0) break;
-
-      if ("groups" in group) {
-        const newSubgroups = [];
-
-        for (const subgroup of group.groups) {
-          if (remainingToTake <= 0) break;
-
-          const items = subgroup.items ?? [];
-          const start = Math.min(remainingToSkip, items.length);
-          const available = items.length - start;
-          const take = Math.min(remainingToTake, available);
-
-          if (take > 0) {
-            newSubgroups.push({
-              ...subgroup,
-              items: items.slice(start, start + take),
-            });
-            remainingToTake -= take;
-          }
-
-          remainingToSkip = Math.max(0, remainingToSkip - items.length);
-        }
-
-        if (newSubgroups.length > 0) {
-          result.push({
-            ...group,
-            groups: newSubgroups,
-          });
-        }
-      } else {
-        const items = group.items ?? [];
-        const start = Math.min(remainingToSkip, items.length);
-        const available = items.length - start;
-        const take = Math.min(remainingToTake, available);
-
-        if (take > 0) {
-          result.push({
-            ...group,
-            items: items.slice(start, start + take),
-          });
-          remainingToTake -= take;
-        }
-
-        remainingToSkip = Math.max(0, remainingToSkip - items.length);
-      }
-    }
-
-    return result;
-  }, [groupedOrders, groupBy, page, limit]);
-
-  const groupedTotalItems = useMemo(() => {
-    if (groupBy === "none") return meta.total;
-
-    return groupedOrders.reduce((acc, group) => {
-      if ("groups" in group) {
-        return (
-          acc +
-          group.groups.reduce(
-            (subAcc, subgroup) => subAcc + (subgroup.items?.length ?? 0),
-            0
-          )
-        );
-      }
-
-      return acc + (group.items?.length ?? 0);
-    }, 0);
-  }, [groupedOrders, groupBy, meta.total]);
-
-  const groupedHasNext = page * limit < groupedTotalItems;
   
 
-    const list =
+  const list =
       Array.isArray(allOrders) && allOrders.length > 0
         ? allOrders
         : Array.isArray(orders)
         ? orders
         : [];
 
-    const sortByName = (arr) =>
+  const sortByName = (arr) =>
       [...arr].sort((a, b) =>
         String(a?.name || "").localeCompare(String(b?.name || ""), "pt-BR")
       );
 
-    const sortByDateDesc = (arr) =>
+  const sortByDateDesc = (arr) =>
       [...arr].sort((a, b) => new Date(b?.order_date || 0) - new Date(a?.order_date || 0));
 
-    const groupFlat = (arr, getKey, sorter) => {
-      const groups = {};
+  const groupFlat = (arr, getKey, sorter) => {
+    const groups = {};
 
       (sorter ? sorter(arr) : [...arr]).forEach((order) => {
         const key = getKey(order);
@@ -356,6 +278,85 @@ function App() {
 
     return groupByStatus(list);
   }, [orders, allOrders, groupBy]);
+
+  const pagedGroupedOrders = useMemo(() => {
+    if (groupBy === "none") return groupedOrders;
+
+    let remainingToSkip = (page - 1) * limit;
+    let remainingToTake = limit;
+    const result = [];
+
+    for (const group of groupedOrders) {
+      if (remainingToTake <= 0) break;
+
+      if ("groups" in group) {
+        const newSubgroups = [];
+
+        for (const subgroup of group.groups) {
+          if (remainingToTake <= 0) break;
+
+          const items = subgroup.items ?? [];
+          const start = Math.min(remainingToSkip, items.length);
+          const available = items.length - start;
+          const take = Math.min(remainingToTake, available);
+
+          if (take > 0) {
+            newSubgroups.push({
+              ...subgroup,
+              items: items.slice(start, start + take),
+            });
+            remainingToTake -= take;
+          }
+
+          remainingToSkip = Math.max(0, remainingToSkip - items.length);
+        }
+
+        if (newSubgroups.length > 0) {
+          result.push({
+            ...group,
+            groups: newSubgroups,
+          });
+        }
+      } else {
+        const items = group.items ?? [];
+        const start = Math.min(remainingToSkip, items.length);
+        const available = items.length - start;
+        const take = Math.min(remainingToTake, available);
+
+        if (take > 0) {
+          result.push({
+            ...group,
+            items: items.slice(start, start + take),
+          });
+          remainingToTake -= take;
+        }
+
+        remainingToSkip = Math.max(0, remainingToSkip - items.length);
+      }
+    }
+
+    return result;
+  }, [groupedOrders, groupBy, page, limit]);
+
+  const groupedTotalItems = useMemo(() => {
+    if (groupBy === "none") return meta.total;
+
+    return groupedOrders.reduce((acc, group) => {
+      if ("groups" in group) {
+        return (
+          acc +
+          group.groups.reduce(
+            (subAcc, subgroup) => subAcc + (subgroup.items?.length ?? 0),
+            0
+          )
+        );
+      }
+
+      return acc + (group.items?.length ?? 0);
+    }, 0);
+  }, [groupedOrders, groupBy, meta.total]);
+
+  const groupedHasNext = page * limit < groupedTotalItems;
 
   function applyFilter() {
     setIsFiltered(true);
