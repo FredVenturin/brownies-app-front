@@ -1610,56 +1610,48 @@ async function saveProductEdit() {
                 </div>
               </div>
 
-              {groupBy === "none" ? (
-                <div className="card" style={{ padding: 12, marginTop: 14 }}>
-                  <div className="row" style={{ gap: 10, alignItems: "center" }}>
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={page <= 1 || loading}
-                      onClick={() => setPage((p) => p - 1)}
-                    >
-                      ◀ Anterior
-                    </button>
+              <div className="card" style={{ padding: 12, marginTop: 14 }}>
+                <div className="row" style={{ gap: 10, alignItems: "center" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={page <= 1 || loading}
+                    onClick={() => setPage((p) => p - 1)}
+                  >
+                    ◀ Anterior
+                  </button>
 
-                    <div className="mini">
-                      Página: <strong>{page}</strong> • Total:{" "}
-                      <strong>{groupBy === "none" ? meta.total : groupedTotalItems}</strong>
-                      {groupBy !== "none" ? " • Paginação após agrupamento" : ""}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn"
-                      disabled={groupBy === "none" ? !meta.has_next || loading : !groupedHasNext || loading}
-                      onClick={() => setPage((p) => p + 1)}
-                    >
-                      Próxima ▶
-                    </button>
-
-                    <select
-                      className="select"
-                      value={limit}
-                      onChange={(e) => {
-                        setPage(1);
-                        setLimit(Number(e.target.value));
-                      }}
-                      style={{ width: 140, marginLeft: "auto" }}
-                    >
-                      <option value={5}>5 / pág</option>
-                      <option value={10}>10 / pág</option>
-                      <option value={20}>20 / pág</option>
-                      <option value={50}>50 / pág</option>
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <div className="card" style={{ padding: 12, marginTop: 14 }}>
                   <div className="mini">
-                    Agrupamento ativo: exibindo todos os pedidos do filtro atual.
+                    Página: <strong>{page}</strong> • Total:{" "}
+                    <strong>{groupBy === "none" ? meta.total : groupedTotalItems}</strong>
+                    {groupBy !== "none" ? " • Paginação após agrupamento" : ""}
                   </div>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={groupBy === "none" ? !meta.has_next || loading : !groupedHasNext || loading}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Próxima ▶
+                  </button>
+
+                  <select
+                    className="select"
+                    value={limit}
+                    onChange={(e) => {
+                      setPage(1);
+                      setLimit(Number(e.target.value));
+                    }}
+                    style={{ width: 140, marginLeft: "auto" }}
+                  >
+                    <option value={5}>5 / pág</option>
+                    <option value={10}>10 / pág</option>
+                    <option value={20}>20 / pág</option>
+                    <option value={50}>50 / pág</option>
+                  </select>
                 </div>
-              )}
+              </div>
 
               {orders.length === 0 ? (
                 <p className="mini">Nenhum pedido encontrado.</p>
