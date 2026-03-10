@@ -1477,7 +1477,7 @@ async function saveProductEdit() {
                         key={idx}
                         style={{
                           display: "grid",
-                          gridTemplateColumns: "2fr 1fr 1fr 1fr auto",
+                          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
                           gap: 10,
                           marginBottom: 10,
                           alignItems: "end",
@@ -1566,7 +1566,7 @@ async function saveProductEdit() {
               </form>
 
               <div className="card" style={{ padding: 12, marginTop: 14 }}>
-                <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+                <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
                   <input
                     className="input"
                     placeholder="Filtrar por nome..."
@@ -2083,6 +2083,7 @@ async function saveProductEdit() {
                         justifyContent: "space-between",
                         gap: 10,
                         alignItems: "center",
+                        flexWrap: "wrap",
                       }}
                     >
                       <div>
@@ -2234,6 +2235,7 @@ async function saveProductEdit() {
                         justifyContent: "space-between",
                         gap: 10,
                         alignItems: "center",
+                        flexWrap: "wrap",
                       }}
                     >
                       <div>
