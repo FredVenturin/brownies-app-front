@@ -1621,7 +1621,13 @@ async function saveProductEdit() {
                     Filtrar
                   </button>
 
-                  <button type="button" className="btn" onClick={clearFilter} disabled={loading}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={clearFilter}
+                    disabled={loading}
+                    style={{ whiteSpace: "nowrap" }}
+                  >
                     Limpar
                   </button>
                 </div>
