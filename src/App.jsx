@@ -125,7 +125,7 @@ function App() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
 
-  const [groupBy, setGroupBy] = useState("status");
+  const [groupBy, setGroupBy] = useState("none");
 
   const GROUP_MODES = {
     STATUS: "status",
@@ -138,6 +138,13 @@ function App() {
   const STATUS_ORDER = ["confirmed", "preparing", "packed", "cancelled", "sold"];
 
   const groupedOrders = useMemo(() => {
+    if (groupBy === "none") {
+      return [{
+        label: "Pedidos",
+        items: Array.isArray(orders) ? orders : []
+      }];
+    }
+
     const list =
       Array.isArray(allOrders) && allOrders.length > 0
         ? allOrders
@@ -1447,6 +1454,7 @@ async function saveProductEdit() {
                     onChange={(e) => setGroupBy(e.target.value)}
                     style={{ width: 220 }}
                   >
+                    <option value="none">Sem agrupamento</option>
                     <option value={GROUP_MODES.STATUS}>Agrupar: status</option>
                     <option value={GROUP_MODES.STATUS_NAME}>Agrupar: status + nome</option>
                     <option value={GROUP_MODES.STATUS_DATE}>Agrupar: status + data</option>
@@ -1519,7 +1527,7 @@ async function saveProductEdit() {
                 </div>
               </div>
 
-              {allOrders.length === 0 ? (
+              {groupBy === "none" ? (
                 <div className="card" style={{ padding: 12, marginTop: 14 }}>
                   <div className="row" style={{ gap: 10, alignItems: "center" }}>
                     <button
