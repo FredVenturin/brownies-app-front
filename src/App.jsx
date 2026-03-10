@@ -273,7 +273,7 @@ function App() {
     }
 
     return groupByStatus(list);
-  }, [orders, groupBy]);
+  }, [orders, allOrders, groupBy]);
 
   function applyFilter() {
     setIsFiltered(true);
