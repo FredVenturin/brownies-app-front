@@ -124,6 +124,131 @@ function App() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
 
+  const [groupBy, setGroupBy] = useState("status");
+
+  const GROUP_MODES = {
+    STATUS: "status",
+    STATUS_NAME: "status_name",
+    STATUS_DATE: "status_date",
+    NAME: "name",
+    DATE: "date",
+  };
+
+  const STATUS_ORDER = ["confirmed", "preparing", "packed", "cancelled", "sold"];
+
+  const groupedOrders = useMemo(() => {
+    const list = Array.isArray(orders) ? orders : [];
+
+    const sortByName = (arr) =>
+      [...arr].sort((a, b) =>
+        String(a?.name || "").localeCompare(String(b?.name || ""), "pt-BR")
+      );
+
+    const sortByDateDesc = (arr) =>
+      [...arr].sort((a, b) => new Date(b?.order_date || 0) - new Date(a?.order_date || 0));
+
+    const groupFlat = (arr, getKey, sorter) => {
+      const groups = {};
+
+      (sorter ? sorter(arr) : [...arr]).forEach((order) => {
+        const key = getKey(order);
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(order);
+      });
+
+      return Object.entries(groups).map(([label, items]) => ({
+        label,
+        items,
+      }));
+    };
+
+    const groupByStatus = (arr) => {
+      const groups = {};
+      STATUS_ORDER.forEach((status) => {
+        groups[status] = [];
+      });
+
+      arr.forEach((order) => {
+        const currentStatus = String(order?.status || "");
+        if (!groups[currentStatus]) groups[currentStatus] = [];
+        groups[currentStatus].push(order);
+      });
+
+      return Object.entries(groups)
+        .filter(([, items]) => items.length > 0)
+        .map(([label, items]) => ({
+          label,
+          items,
+        }));
+    };
+
+    const groupNestedByStatusThen = (arr, getChildKey, childSorter) => {
+      const statusGroups = {};
+      STATUS_ORDER.forEach((status) => {
+        statusGroups[status] = [];
+      });
+
+      arr.forEach((order) => {
+        const currentStatus = String(order?.status || "");
+        if (!statusGroups[currentStatus]) statusGroups[currentStatus] = [];
+        statusGroups[currentStatus].push(order);
+      });
+
+      return Object.entries(statusGroups)
+        .filter(([, items]) => items.length > 0)
+        .map(([statusLabel, statusItems]) => {
+          const childGroups = {};
+          (childSorter ? childSorter(statusItems) : [...statusItems]).forEach((order) => {
+            const childKey = getChildKey(order);
+            if (!childGroups[childKey]) childGroups[childKey] = [];
+            childGroups[childKey].push(order);
+          });
+
+          return {
+            label: statusLabel,
+            groups: Object.entries(childGroups).map(([label, items]) => ({
+              label,
+              items,
+            })),
+          };
+        });
+    };
+
+    if (groupBy === GROUP_MODES.NAME) {
+      return groupFlat(
+        list,
+        (order) => String(order?.name || "Sem nome"),
+        sortByName
+      );
+    }
+
+    if (groupBy === GROUP_MODES.DATE) {
+      return groupFlat(
+        list,
+        (order) => (order?.order_date ? formatDateBR(order.order_date) : "Sem data"),
+        sortByDateDesc
+      );
+    }
+
+    if (groupBy === GROUP_MODES.STATUS_NAME) {
+      return groupNestedByStatusThen(
+        list,
+        (order) => String(order?.name || "Sem nome"),
+        sortByName
+      );
+    }
+
+    if (groupBy === GROUP_MODES.STATUS_DATE) {
+      return groupNestedByStatusThen(
+        list,
+        (order) => (order?.order_date ? formatDateBR(order.order_date) : "Sem data"),
+        sortByDateDesc
+      );
+    }
+
+    return groupByStatus(list);
+  }, [orders, groupBy]);
+
   function applyFilter() {
     setIsFiltered(true);
     setPage(1);
@@ -1274,6 +1399,19 @@ async function saveProductEdit() {
                     <option value="cancelled">cancelled</option>
                   </select>
 
+                  <select
+                    className="select"
+                    value={groupBy}
+                    onChange={(e) => setGroupBy(e.target.value)}
+                    style={{ width: 220 }}
+                  >
+                    <option value={GROUP_MODES.STATUS}>Agrupar: status</option>
+                    <option value={GROUP_MODES.STATUS_NAME}>Agrupar: status + nome</option>
+                    <option value={GROUP_MODES.STATUS_DATE}>Agrupar: status + data</option>
+                    <option value={GROUP_MODES.NAME}>Agrupar: nome</option>
+                    <option value={GROUP_MODES.DATE}>Agrupar: data</option>
+                  </select>
+
                   <input
                     className="input"
                     type="date"
@@ -1383,119 +1521,256 @@ async function saveProductEdit() {
               {orders.length === 0 ? (
                 <p className="mini">Nenhum pedido encontrado.</p>
               ) : (
-                <div className="grid orders">
-                  {orders.map((order) => {
-                    const orderTotal = (order.itens ?? []).reduce(
-                      (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
-                      0
-                    );
+                <div style={{ display: "grid", gap: 18 }}>
+                  {groupedOrders.map((group, groupIndex) => (
+                    <div key={`${group.label}-${groupIndex}`} className="card" style={{ padding: 12 }}>
+                      <div style={{ fontWeight: 800, fontSize: 18, marginBottom: 10 }}>
+                        {String(group.label || "").toUpperCase()}
+                      </div>
 
-                    const orderCost = (order.itens ?? []).reduce(
-                      (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
-                      0
-                    );
+                      {"groups" in group ? (
+                        <div style={{ display: "grid", gap: 14 }}>
+                          {group.groups.map((subgroup, subIndex) => (
+                            <div key={`${group.label}-${subgroup.label}-${subIndex}`}>
+                              <div className="mini" style={{ marginBottom: 8, fontWeight: 700 }}>
+                                {subgroup.label}
+                              </div>
 
-                    const orderProfit = order.status === "sold" ? orderTotal - orderCost : 0;
+                              <div className="grid orders">
+                                {subgroup.items.map((order) => {
+                                  const orderTotal = (order.itens ?? []).reduce(
+                                    (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
+                                    0
+                                  );
 
-                    return (
-                      <div
-                        key={order._id}
-                        className={`card orderCard status-${order.status || "unknown"}`}
-                      >
-                        <div className="row">
-                          <div style={{ fontWeight: 800 }}>{order.name}</div>
-                          <span className={`pill pill-${order.status || "unknown"}`}>
-                            {String(order.status || "").toUpperCase()}
-                          </span>
-                        </div>
+                                  const orderCost = (order.itens ?? []).reduce(
+                                    (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
+                                    0
+                                  );
 
-                        <div className="kv">
-                          <div>
-                            <strong>ID:</strong> {order._id}
-                          </div>
-                          <div>
-                            <strong>Data:</strong> {formatDateBR(order.order_date)}
-                          </div>
-                        </div>
+                                  const orderProfit = order.status === "sold" ? orderTotal - orderCost : 0;
 
-                        <div className="sep"></div>
+                                  return (
+                                    <div
+                                      key={order._id}
+                                      className={`card orderCard status-${order.status || "unknown"}`}
+                                    >
+                                      <div className="row">
+                                        <div style={{ fontWeight: 800 }}>{order.name}</div>
+                                        <span className={`pill pill-${order.status || "unknown"}`}>
+                                          {String(order.status || "").toUpperCase()}
+                                        </span>
+                                      </div>
 
-                        <div style={{ marginTop: 8 }}>
-                          <strong>Itens:</strong>
+                                      <div className="kv">
+                                        <div>
+                                          <strong>ID:</strong> {order._id}
+                                        </div>
+                                        <div>
+                                          <strong>Data:</strong> {formatDateBR(order.order_date)}
+                                        </div>
+                                      </div>
 
-                          {(order.itens ?? []).map((it, idx) => (
-                            <div
-                              key={idx}
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                fontSize: 14,
-                                marginTop: 4,
-                              }}
-                            >
-                              <span>
-                                {it.quantidade}x {it.item}
-                              </span>
-                              <span>
-                                R$ {(Number(it.quantidade) * Number(it.price)).toFixed(2)}
-                              </span>
+                                      <div className="sep"></div>
+
+                                      <div style={{ marginTop: 8 }}>
+                                        <strong>Itens:</strong>
+
+                                        {(order.itens ?? []).map((it, idx) => (
+                                          <div
+                                            key={idx}
+                                            style={{
+                                              display: "flex",
+                                              justifyContent: "space-between",
+                                              fontSize: 14,
+                                              marginTop: 4,
+                                            }}
+                                          >
+                                            <span>
+                                              {it.quantidade}x {it.item}
+                                            </span>
+                                            <span>
+                                              R$ {(Number(it.quantidade) * Number(it.price)).toFixed(2)}
+                                            </span>
+                                          </div>
+                                        ))}
+
+                                        <div style={{ marginTop: 8, fontWeight: "bold" }}>
+                                          Total: R$ {orderTotal.toFixed(2)}
+                                        </div>
+
+                                        <div style={{ marginTop: 8 }}>
+                                          <div>
+                                            <strong>Custo:</strong> R$ {orderCost.toFixed(2)}
+                                          </div>
+                                          {order.status === "sold" ? (
+                                            <div>
+                                              <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      </div>
+
+                                      <div className="sep"></div>
+
+                                      <div className="row" style={{ gap: 8 }}>
+                                        <select
+                                          className="select"
+                                          value={order.status}
+                                          onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                          disabled={loading}
+                                          style={{ flex: 1 }}
+                                        >
+                                          <option value="confirmed">confirmed</option>
+                                          <option value="preparing">preparing</option>
+                                          <option value="packed">packed</option>
+                                          <option value="sold">sold</option>
+                                          <option value="cancelled">cancelled</option>
+                                        </select>
+
+                                        <button
+                                          type="button"
+                                          className="btn"
+                                          onClick={() => startEditOrder(order)}
+                                          disabled={loading}
+                                        >
+                                          Editar
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          className="btn btnDanger"
+                                          onClick={() => deleteOrder(order._id)}
+                                          disabled={loading}
+                                        >
+                                          Excluir
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           ))}
+                        </div>
+                      ) : (
+                        <div className="grid orders">
+                          {group.items.map((order) => {
+                            const orderTotal = (order.itens ?? []).reduce(
+                              (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
+                              0
+                            );
 
-                          <div style={{ marginTop: 8, fontWeight: "bold" }}>
-                            Total: R$ {orderTotal.toFixed(2)}
-                          </div>
+                            const orderCost = (order.itens ?? []).reduce(
+                              (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.cost ?? 0),
+                              0
+                            );
 
-                          <div style={{ marginTop: 8 }}>
-                            <div>
-                              <strong>Custo:</strong> R$ {orderCost.toFixed(2)}
-                            </div>
-                            {order.status === "sold" ? (
-                              <div>
-                                <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
+                            const orderProfit = order.status === "sold" ? orderTotal - orderCost : 0;
+
+                            return (
+                              <div
+                                key={order._id}
+                                className={`card orderCard status-${order.status || "unknown"}`}
+                              >
+                                <div className="row">
+                                  <div style={{ fontWeight: 800 }}>{order.name}</div>
+                                  <span className={`pill pill-${order.status || "unknown"}`}>
+                                    {String(order.status || "").toUpperCase()}
+                                  </span>
+                                </div>
+
+                                <div className="kv">
+                                  <div>
+                                    <strong>ID:</strong> {order._id}
+                                  </div>
+                                  <div>
+                                    <strong>Data:</strong> {formatDateBR(order.order_date)}
+                                  </div>
+                                </div>
+
+                                <div className="sep"></div>
+
+                                <div style={{ marginTop: 8 }}>
+                                  <strong>Itens:</strong>
+
+                                  {(order.itens ?? []).map((it, idx) => (
+                                    <div
+                                      key={idx}
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        fontSize: 14,
+                                        marginTop: 4,
+                                      }}
+                                    >
+                                      <span>
+                                        {it.quantidade}x {it.item}
+                                      </span>
+                                      <span>
+                                        R$ {(Number(it.quantidade) * Number(it.price)).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  ))}
+
+                                  <div style={{ marginTop: 8, fontWeight: "bold" }}>
+                                    Total: R$ {orderTotal.toFixed(2)}
+                                  </div>
+
+                                  <div style={{ marginTop: 8 }}>
+                                    <div>
+                                      <strong>Custo:</strong> R$ {orderCost.toFixed(2)}
+                                    </div>
+                                    {order.status === "sold" ? (
+                                      <div>
+                                        <strong>Lucro:</strong> R$ {orderProfit.toFixed(2)}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
+
+                                <div className="sep"></div>
+
+                                <div className="row" style={{ gap: 8 }}>
+                                  <select
+                                    className="select"
+                                    value={order.status}
+                                    onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                                    disabled={loading}
+                                    style={{ flex: 1 }}
+                                  >
+                                    <option value="confirmed">confirmed</option>
+                                    <option value="preparing">preparing</option>
+                                    <option value="packed">packed</option>
+                                    <option value="sold">sold</option>
+                                    <option value="cancelled">cancelled</option>
+                                  </select>
+
+                                  <button
+                                    type="button"
+                                    className="btn"
+                                    onClick={() => startEditOrder(order)}
+                                    disabled={loading}
+                                  >
+                                    Editar
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    className="btn btnDanger"
+                                    onClick={() => deleteOrder(order._id)}
+                                    disabled={loading}
+                                  >
+                                    Excluir
+                                  </button>
+                                </div>
                               </div>
-                            ) : null}
-                          </div>
+                            );
+                          })}
                         </div>
-
-                        <div className="sep"></div>
-
-                        <div className="row" style={{ gap: 8 }}>
-                          <select
-                            className="select"
-                            value={order.status}
-                            onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                            disabled={loading}
-                            style={{ flex: 1 }}
-                          >
-                            <option value="confirmed">confirmed</option>
-                            <option value="preparing">preparing</option>
-                            <option value="packed">packed</option>
-                            <option value="sold">sold</option>
-                            <option value="cancelled">cancelled</option>
-                          </select>
-
-                          <button
-                            type="button"
-                            className="btn"
-                            onClick={() => startEditOrder(order)}
-                            disabled={loading}
-                          >
-                            Editar
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn btnDanger"
-                            onClick={() => deleteOrder(order._id)}
-                            disabled={loading}
-                          >
-                            Excluir
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
             </>
