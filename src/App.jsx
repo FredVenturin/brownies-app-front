@@ -137,6 +137,16 @@ function App() {
 
   const STATUS_ORDER = ["confirmed", "preparing", "packed", "cancelled", "sold"];
 
+  
+
+  const groupedOrders = useMemo(() => {
+    if (groupBy === "none") {
+      return [{
+        label: "Pedidos",
+        items: Array.isArray(orders) ? orders : []
+      }];
+    }
+
   const pagedGroupedOrders = useMemo(() => {
     if (groupBy === "none") return groupedOrders;
 
@@ -215,17 +225,7 @@ function App() {
   }, [groupedOrders, groupBy, meta.total]);
 
   const groupedHasNext = page * limit < groupedTotalItems;
-
-
-  const groupedOrders = useMemo(() => {
-    if (groupBy === "none") {
-      return [{
-        label: "Pedidos",
-        items: Array.isArray(orders) ? orders : []
-      }];
-    }
-
-    
+  
 
     const list =
       Array.isArray(allOrders) && allOrders.length > 0
