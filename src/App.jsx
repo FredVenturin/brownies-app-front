@@ -52,6 +52,24 @@ function App() {
   const [products, setProducts] = useState([]);
   const [showNewProduct, setShowNewProduct] = useState(false);
 
+  const [clientsPage, setClientsPage] = useState(1);
+  const [clientsLimit, setClientsLimit] = useState(10);
+  const [clientsMeta, setClientsMeta] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    has_next: false,
+  });
+
+  const [productsPage, setProductsPage] = useState(1);
+  const [productsLimit, setProductsLimit] = useState(10);
+  const [productsMeta, setProductsMeta] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    has_next: false,
+  });
+
   const [newProductName, setNewProductName] = useState("");
   const [newProductSalePrice, setNewProductSalePrice] = useState("");
   const [newProductCost, setNewProductCost] = useState("");
@@ -494,10 +512,24 @@ async function saveProductEdit() {
 
   async function loadProducts() {
     try {
-      const res = await ordersApi.listProducts();
+      const res = await ordersApi.listProducts({
+        page: productsPage,
+        limit: productsLimit,
+      });
+
       const payload = res?.payload ?? res;
+
       const list = payload?.data?.attributes ?? [];
       setProducts(list);
+
+      setProductsMeta(
+        payload?.meta ?? {
+          page: productsPage,
+          limit: productsLimit,
+          total: list.length,
+          has_next: list.length === productsLimit,
+        }
+      );
     } catch (err) {
       console.error(err);
     }
@@ -506,10 +538,24 @@ async function saveProductEdit() {
 
   async function loadClients() {
     try {
-      const res = await ordersApi.listClients();
+      const res = await ordersApi.listClients({
+        page: clientsPage,
+        limit: clientsLimit,
+      });
+
       const payload = res?.payload ?? res;
+
       const list = payload?.data?.attributes ?? [];
       setClients(list);
+
+      setClientsMeta(
+        payload?.meta ?? {
+          page: clientsPage,
+          limit: clientsLimit,
+          total: list.length,
+          has_next: list.length === clientsLimit,
+        }
+      );
     } catch (err) {
       console.error(err);
     }
@@ -701,7 +747,19 @@ async function saveProductEdit() {
   useEffect(() => {
     reloadAll().catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, isFiltered, filterStatus, filterName, startDate, endDate]);
+    }, [
+      page,
+      limit,
+      isFiltered,
+      filterStatus,
+      filterName,
+      startDate,
+      endDate,
+      clientsPage,
+      clientsLimit,
+      productsPage,
+      productsLimit,
+    ]);
 
   useEffect(() => {
     if (!profitYear) return;
@@ -1916,9 +1974,47 @@ async function saveProductEdit() {
           {/* ========================= */}
           {activeView === "clients" ? (
             <div className="card" style={{ padding: 12, marginTop: 14 }}>
-              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
                 <div style={{ fontWeight: 800 }}>Clientes</div>
-                <div className="mini">{clients.length} cadastrados</div>
+
+                <div className="row" style={{ gap: 8, alignItems: "center", marginLeft: "auto" }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={clientsPage <= 1 || loading}
+                    onClick={() => setClientsPage((p) => p - 1)}
+                  >
+                    ◀ Anterior
+                  </button>
+
+                  <div className="mini">
+                    Página: <strong>{clientsPage}</strong> • Total: <strong>{clientsMeta.total}</strong>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={!clientsMeta.has_next || loading}
+                    onClick={() => setClientsPage((p) => p + 1)}
+                  >
+                    Próxima ▶
+                  </button>
+
+                  <select
+                    className="select"
+                    value={clientsLimit}
+                    onChange={(e) => {
+                      setClientsPage(1);
+                      setClientsLimit(Number(e.target.value));
+                    }}
+                    style={{ width: 140 }}
+                  >
+                    <option value={5}>5 / pág</option>
+                    <option value={10}>10 / pág</option>
+                    <option value={20}>20 / pág</option>
+                    <option value={50}>50 / pág</option>
+                  </select>
+                </div>
               </div>
 
               <div className="sep"></div>
@@ -2019,10 +2115,48 @@ async function saveProductEdit() {
           {/* ========================= */}
           {activeView === "products" ? (
             <div className="card" style={{ padding: 12, marginTop: 14 }}>
-              <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ fontWeight: 800 }}>Produtos</div>
-                <div className="mini">{products.length} cadastrados</div>
+              <div className="row" style={{ justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div style={{ fontWeight: 800 }}>Produtos</div>
+
+              <div className="row" style={{ gap: 8, alignItems: "center", marginLeft: "auto" }}>
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={productsPage <= 1 || loading}
+                  onClick={() => setProductsPage((p) => p - 1)}
+                >
+                  ◀ Anterior
+                </button>
+
+                <div className="mini">
+                  Página: <strong>{productsPage}</strong> • Total: <strong>{productsMeta.total}</strong>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={!productsMeta.has_next || loading}
+                  onClick={() => setProductsPage((p) => p + 1)}
+                >
+                  Próxima ▶
+                </button>
+
+                <select
+                  className="select"
+                  value={productsLimit}
+                  onChange={(e) => {
+                    setProductsPage(1);
+                    setProductsLimit(Number(e.target.value));
+                  }}
+                  style={{ width: 140 }}
+                >
+                  <option value={5}>5 / pág</option>
+                  <option value={10}>10 / pág</option>
+                  <option value={20}>20 / pág</option>
+                  <option value={50}>50 / pág</option>
+                </select>
               </div>
+            </div>
 
               <div className="sep"></div>
 

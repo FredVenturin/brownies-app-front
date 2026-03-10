@@ -41,7 +41,8 @@ export const ordersApi = {
 
   listAll: () => request("/delivery/orders/all"),
 
-  listClients: () => request("/delivery/clients"),
+  listClients: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/clients${toQuery({ page, limit })}`),
 
   createClient: (body) =>
     request("/delivery/clients", {
@@ -49,7 +50,8 @@ export const ordersApi = {
       body,
     }),
 
-  listProducts: () => request("/delivery/products"),
+  listProducts: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/products${toQuery({ page, limit })}`),
 
   createProduct: (body) =>
     request("/delivery/products", {
