@@ -38,6 +38,7 @@ function toISODateInput(value, fallbackISO) {
 
 function App() {
   const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [authOk, setAuthOk] = useState(false);
@@ -137,7 +138,7 @@ function App() {
   const STATUS_ORDER = ["confirmed", "preparing", "packed", "cancelled", "sold"];
 
   const groupedOrders = useMemo(() => {
-    const list = Array.isArray(orders) ? orders : [];
+    const list = Array.isArray(allOrders) ? allOrders : [];
 
     const sortByName = (arr) =>
       [...arr].sort((a, b) =>
@@ -448,6 +449,21 @@ async function saveProductEdit() {
     );
   }
 
+  async function loadAllOrders() {
+    const res = isFiltered
+      ? await ordersApi.filter({
+          status: filterStatus || undefined,
+          name: filterName || undefined,
+          start_date: startDate || undefined,
+          end_date: endDate || undefined,
+        })
+      : await ordersApi.listAll();
+
+    const payload = res?.payload ?? res;
+    const list = payload?.data?.attributes ?? [];
+    setAllOrders(list);
+  }
+
   function startEditClient(client) {
     setEditingClientId(client._id);
     setEditClientName(client.name ?? "");
@@ -576,7 +592,15 @@ async function saveProductEdit() {
   }
 
   async function reloadAll() {
-    await Promise.allSettled([loadOrdersPaginated(), loadStats(), loadProfitSummary(), loadProfitPeriod(), loadClients(), loadProducts()]);
+    await Promise.allSettled([
+      loadOrdersPaginated(),
+      loadAllOrders(),
+      loadStats(),
+      loadProfitSummary(),
+      loadProfitPeriod(),
+      loadClients(),
+      loadProducts(),
+    ]);
   }
 
   useEffect(() => {

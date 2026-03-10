@@ -39,6 +39,8 @@ export const ordersApi = {
   listPaginated: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/orders${toQuery({ page, limit })}`),
 
+  listAll: () => request("/delivery/orders/all"),
+
   listClients: () => request("/delivery/clients"),
 
   createClient: (body) =>
