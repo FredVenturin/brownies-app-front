@@ -138,7 +138,12 @@ function App() {
   const STATUS_ORDER = ["confirmed", "preparing", "packed", "cancelled", "sold"];
 
   const groupedOrders = useMemo(() => {
-    const list = Array.isArray(allOrders) ? allOrders : [];
+    const list =
+      Array.isArray(allOrders) && allOrders.length > 0
+        ? allOrders
+        : Array.isArray(orders)
+        ? orders
+        : [];
 
     const sortByName = (arr) =>
       [...arr].sort((a, b) =>
