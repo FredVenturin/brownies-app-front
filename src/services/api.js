@@ -56,6 +56,9 @@ export const ordersApi = {
   listProducts: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/products${toQuery({ page, limit })}`),
 
+  listAllProducts: () =>
+    request("/delivery/products/all"),
+
   createProduct: (body) =>
     request("/delivery/products", {
       method: "POST",

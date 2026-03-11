@@ -50,6 +50,7 @@ function App() {
   const [newClientPhone, setNewClientPhone] = useState("");
 
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [showNewProduct, setShowNewProduct] = useState(false);
 
   const [clientsPage, setClientsPage] = useState(1);
@@ -536,6 +537,17 @@ async function saveProductEdit() {
     }
   }
 
+  async function loadAllProducts() {
+    try {
+      const res = await ordersApi.listAllProducts();
+      const payload = res?.payload ?? res;
+      const list = payload?.data?.attributes ?? [];
+      setAllProducts(list);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
 
   async function loadClients() {
     try {
@@ -754,6 +766,7 @@ async function saveProductEdit() {
       loadClients(),
       loadAllClients(),
       loadProducts(),
+      loadAllProducts(),
     ]);
   }
 
@@ -1507,7 +1520,7 @@ async function saveProductEdit() {
                             required
                           />
                           <datalist id="products-list">
-                            {products.map((p) => (
+                            {allProducts.map((p) => (
                               <option key={p._id} value={p.name} />
                             ))}
                           </datalist>
