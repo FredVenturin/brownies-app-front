@@ -44,6 +44,9 @@ export const ordersApi = {
   listClients: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/clients${toQuery({ page, limit })}`),
 
+  listAllClients: () =>
+    request("/delivery/clients/all"),
+
   createClient: (body) =>
     request("/delivery/clients", {
       method: "POST",

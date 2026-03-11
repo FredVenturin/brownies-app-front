@@ -129,6 +129,7 @@ function App() {
 
   const [name, setName] = useState("");
   const [clients, setClients] = useState([]);
+  const [allClients, setAllClients] = useState([]);
   const [newClientName, setNewClientName] = useState("");
   const [items, setItems] = useState([{ item: "", quantidade: 1, price: 0, cost: 0 }]);
   const [status, setStatus] = useState("confirmed");
@@ -561,6 +562,17 @@ async function saveProductEdit() {
     }
   }
 
+  async function loadAllClients() {
+    try {
+      const res = await ordersApi.listAllClients();
+      const payload = res?.payload ?? res;
+      const list = payload?.data?.attributes ?? [];
+      setAllClients(list);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   
 
   async function loadOrdersPaginated() {
@@ -740,6 +752,7 @@ async function saveProductEdit() {
       loadProfitSummary(),
       loadProfitPeriod(),
       loadClients(),
+      loadAllClients(),
       loadProducts(),
     ]);
   }
@@ -1266,7 +1279,7 @@ async function saveProductEdit() {
                         required
                       />
                       <datalist id="clients-list">
-                        {clients.map((c) => (
+                        {allClients.map((c) => (
                           <option key={c._id} value={c.name} />
                         ))}
                       </datalist>
