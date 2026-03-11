@@ -1292,7 +1292,7 @@ async function saveProductEdit() {
                         required
                       />
                       <datalist id="clients-list">
-                        {allClients.map((c) => (
+                        {[...allClients].sort((a,b)=>a.name.localeCompare(b.name,"pt-BR")).map((c) => (
                           <option key={c._id} value={c.name} />
                         ))}
                       </datalist>
@@ -1520,7 +1520,7 @@ async function saveProductEdit() {
                             required
                           />
                           <datalist id="products-list">
-                            {allProducts.map((p) => (
+                            {[...allProducts].sort((a,b)=>a.name.localeCompare(b.name)).map((p) => (
                               <option key={p._id} value={p.name} />
                             ))}
                           </datalist>
