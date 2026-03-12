@@ -26,45 +26,40 @@ async function request(path, { method = "GET", body } = {}) {
 
 function toQuery(params = {}) {
   const sp = new URLSearchParams();
+
   Object.entries(params).forEach(([k, v]) => {
     if (v === undefined || v === null || v === "") return;
     sp.set(k, String(v));
   });
+
   const qs = sp.toString();
   return qs ? `?${qs}` : "";
 }
 
 export const ordersApi = {
-  // GETs agora retornam o objeto completo (ok/status/payload) igual os outros
+  // Pedidos
   listPaginated: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/orders${toQuery({ page, limit })}`),
 
   listAll: () => request("/delivery/orders/all"),
 
-  listClients: ({ page = 1, limit = 10 } = {}) =>
-    request(`/delivery/clients${toQuery({ page, limit })}`),
+  findById: (id) =>
+    request(`/delivery/order/${id}`),
 
-  listAllClients: () =>
-    request("/delivery/clients/all"),
+  create: (body) =>
+    request("/delivery/order", { method: "POST", body }),
 
-  createClient: (body) =>
-    request("/delivery/clients", {
-      method: "POST",
-      body,
+  update: (id, body) =>
+    request(`/delivery/order/${id}`, { method: "PATCH", body }),
+
+  deleteOne: (id) =>
+    request(`/delivery/order/${id}`, { method: "DELETE" }),
+
+  updateStatus: (id, status) =>
+    request(`/delivery/order/${id}/status`, {
+      method: "PATCH",
+      body: { status },
     }),
-
-  listProducts: ({ page = 1, limit = 10 } = {}) =>
-    request(`/delivery/products${toQuery({ page, limit })}`),
-
-  listAllProducts: () =>
-    request("/delivery/products/all"),
-
-  createProduct: (body) =>
-    request("/delivery/products", {
-      method: "POST",
-      body,
-    }),
-    
 
   filter: ({ status, name, start_date, end_date, page, limit } = {}) =>
     request(
@@ -81,29 +76,98 @@ export const ordersApi = {
   count: ({ status, name } = {}) =>
     request(`/delivery/orders/count${toQuery({ status, name })}`),
 
+  updateMany: (body) =>
+    request("/delivery/orders/update-many", { method: "PATCH", body }),
+
+  increment: (body) =>
+    request("/delivery/orders/increment", { method: "PATCH", body }),
+
+  deleteMany: (body) =>
+    request("/delivery/orders/delete-many", { method: "DELETE", body }),
+
+  // Lixeira de pedidos
+  listDeletedOrders: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/orders/trash${toQuery({ page, limit })}`),
+
+  restoreOrder: (orderId) =>
+    request(`/delivery/orders/${orderId}/restore`, { method: "PATCH" }),
+
+  // Lucro
+  profitSummary: () =>
+    request("/delivery/profit/summary"),
+
   profitByPeriod: (params) => {
     const q = new URLSearchParams();
     if (params?.year) q.set("year", String(params.year));
     if (params?.month) q.set("month", String(params.month));
     if (params?.day) q.set("day", String(params.day));
-    return request(`/delivery/profit?${q.toString()}`);
+    const qs = q.toString();
+    return request(`/delivery/profit${qs ? `?${qs}` : ""}`);
   },
 
-  // Ações em massa (como já estava)
-  updateMany: (body) => request(`/delivery/orders/update-many`, { method: "PATCH", body }),
-  increment: (body) => request(`/delivery/orders/increment`, { method: "PATCH", body }),
-  profitSummary: () => request("/delivery/profit/summary"),
-  deleteMany: (body) => request(`/delivery/orders/delete-many`, { method: "DELETE", body }),
+  // Clientes
+  listClients: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/clients${toQuery({ page, limit })}`),
 
-  updateClient: (clientId, body) => request(`/delivery/clients/${clientId}`, { method: "PATCH", body }),
-  deleteClient: (clientId) => request(`/delivery/clients/${clientId}`, { method: "DELETE" }),
+  listAllClients: () =>
+    request("/delivery/clients/all"),
 
-  updateProduct: (productId, body) => request(`/delivery/products/${productId}`, { method: "PATCH", body }),
-  deleteProduct: (productId) => request(`/delivery/products/${productId}`, { method: "DELETE" }),
+  createClient: (body) =>
+    request("/delivery/clients", {
+      method: "POST",
+      body,
+    }),
 
-  // Opcional mas MUITO recomendado: para parar de usar fetch direto no App.jsx
-  create: (body) => request(`/delivery/order`, { method: "POST", body }),
-  deleteOne: (id) => request(`/delivery/order/${id}`, { method: "DELETE" }),
-  updateStatus: (id, status) =>
-    request(`/delivery/order/${id}/status`, { method: "PATCH", body: { status } }),
+  updateClient: (clientId, body) =>
+    request(`/delivery/clients/${clientId}`, {
+      method: "PATCH",
+      body,
+    }),
+
+  deleteClient: (clientId) =>
+    request(`/delivery/clients/${clientId}`, {
+      method: "DELETE",
+    }),
+
+  // Lixeira de clientes
+  listDeletedClients: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/clients/trash${toQuery({ page, limit })}`),
+
+  restoreClient: (clientId) =>
+    request(`/delivery/clients/${clientId}/restore`, {
+      method: "PATCH",
+    }),
+
+  // Produtos
+  listProducts: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/products${toQuery({ page, limit })}`),
+
+  listAllProducts: () =>
+    request("/delivery/products/all"),
+
+  createProduct: (body) =>
+    request("/delivery/products", {
+      method: "POST",
+      body,
+    }),
+
+  updateProduct: (productId, body) =>
+    request(`/delivery/products/${productId}`, {
+      method: "PATCH",
+      body,
+    }),
+
+  deleteProduct: (productId) =>
+    request(`/delivery/products/${productId}`, {
+      method: "DELETE",
+    }),
+
+  // Lixeira de produtos
+  listDeletedProducts: ({ page = 1, limit = 10 } = {}) =>
+    request(`/delivery/products/trash${toQuery({ page, limit })}`),
+
+  restoreProduct: (productId) =>
+    request(`/delivery/products/${productId}/restore`, {
+      method: "PATCH",
+    }),
 };
