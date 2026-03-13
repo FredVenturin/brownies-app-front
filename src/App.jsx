@@ -1745,6 +1745,14 @@ import { ordersApi } from "./services/api";
             <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
               <input
                 className="input"
+                placeholder="Filtrar por nome..."
+                value={filterName}
+                onChange={(e) => setFilterName(e.target.value)}
+                style={{ flex: 1 }}
+              />
+
+              <input
+                className="input"
                 list="products-list"
                 placeholder="Filtrar por produto..."
                 value={filterProduct}
