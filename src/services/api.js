@@ -61,11 +61,12 @@ export const ordersApi = {
       body: { status },
     }),
 
-  filter: ({ status, name, start_date, end_date, page, limit } = {}) =>
+  filter: ({ status, name, product, start_date, end_date, page, limit } = {}) =>
     request(
       `/delivery/orders/filter${toQuery({
         status,
         name,
+        product,
         start_date,
         end_date,
         page,

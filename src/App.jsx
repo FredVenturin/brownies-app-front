@@ -160,6 +160,7 @@ import { ordersApi } from "./services/api";
 
     const [filterStatus, setFilterStatus] = useState("");
     const [filterName, setFilterName] = useState("");
+    const [filterProduct, setFilterProduct] = useState("");
 
     const [groupBy, setGroupBy] = useState("none");
 
@@ -401,6 +402,7 @@ import { ordersApi } from "./services/api";
       setIsFiltered(false);
       setFilterStatus("");
       setFilterName("");
+      setFilterProduct("");
       setStartDate("");
       setEndDate("");
       setPage(1);
@@ -449,6 +451,7 @@ import { ordersApi } from "./services/api";
       return {
         status: filterStatus || undefined,
         name: filterName || undefined,
+        product: filterProduct || undefined,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
       };
@@ -667,30 +670,35 @@ import { ordersApi } from "./services/api";
     }
 
     async function loadOrdersPaginated() {
-      const res = isFiltered
-        ? await ordersApi.filter({
-            status: filterStatus || undefined,
-            name: filterName || undefined,
-            start_date: startDate || undefined,
-            end_date: endDate || undefined,
+      try {
+        const res = isFiltered
+          ? await ordersApi.filter({
+              status: filterStatus || undefined,
+              name: filterName || undefined,
+              product: filterProduct || undefined,
+              start_date: startDate || undefined,
+              end_date: endDate || undefined,
+              page,
+              limit,
+            })
+          : await ordersApi.listPaginated({ page, limit });
+
+        const payload = res?.payload ?? res;
+        const list = payload?.data?.attributes ?? [];
+        const metaFromApi = payload?.data?.meta ?? payload?.meta;
+
+        setOrders(list);
+        setMeta(
+          metaFromApi ?? {
             page,
             limit,
-          })
-        : await ordersApi.listPaginated({ page, limit });
-
-      const payload = res?.payload ?? res;
-      const list = payload?.data?.attributes ?? [];
-      const metaFromApi = payload?.data?.meta ?? payload?.meta;
-
-      setOrders(list);
-      setMeta(
-        metaFromApi ?? {
-          page,
-          limit,
-          total: list.length,
-          has_next: list.length === limit,
-        }
-      );
+            total: list.length,
+            has_next: list.length === limit,
+          }
+        );
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     async function loadAllOrders() {
@@ -698,6 +706,7 @@ import { ordersApi } from "./services/api";
         ? await ordersApi.filter({
             status: filterStatus || undefined,
             name: filterName || undefined,
+            product: filterProduct || undefined,
             start_date: startDate || undefined,
             end_date: endDate || undefined,
           })
@@ -905,6 +914,7 @@ import { ordersApi } from "./services/api";
       isFiltered,
       filterStatus,
       filterName,
+      filterProduct,
       startDate,
       endDate,
       clientsPage,
@@ -1735,9 +1745,10 @@ import { ordersApi } from "./services/api";
             <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
               <input
                 className="input"
-                placeholder="Filtrar por nome..."
-                value={filterName}
-                onChange={(e) => setFilterName(e.target.value)}
+                list="products-list"
+                placeholder="Filtrar por produto..."
+                value={filterProduct}
+                onChange={(e) => setFilterProduct(e.target.value)}
                 style={{ flex: 1 }}
               />
 
