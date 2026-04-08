@@ -37,6 +37,9 @@ function toQuery(params = {}) {
 }
 
 export const ordersApi = {
+  // Contagem de pedidos por status (1 request, substitui 6 chamadas a count)
+  stats: () => request("/delivery/orders/stats"),
+
   // Pedidos
   listPaginated: ({ page = 1, limit = 10 } = {}) =>
     request(`/delivery/orders${toQuery({ page, limit })}`),
