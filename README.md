@@ -1,211 +1,92 @@
-README.md — Frontend
-Brownies Orders Frontend
+# Brownies Orders Frontend
 
-Interface web para gerenciamento de pedidos, clientes e produtos de um negócio de venda de doces.
-O sistema permite registrar vendas, acompanhar pedidos, cadastrar clientes e produtos, além de visualizar métricas de lucro.
-A aplicação consome a Brownies Delivery API (backend).
+Interface web para gerenciamento de pedidos, clientes e produtos de um negócio de venda de doces. Consome a [Brownies Delivery API](https://github.com/FredVenturin/brownie-app-back).
 
-Tecnologias utilizadas
+## Tecnologias
 
-*   React
-*   Vite
-*   JavaScript
-*   Fetch API
+- React 19
+- Vite 7
+- JavaScript
+- Fetch API
 
-Funcionalidades
+## Funcionalidades
 
-**Pedidos**
-*   Criar pedidos
-*   Editar pedidos
-*   Atualizar status do pedido
-*   Listagem paginada
-*   Filtros de busca
-*   Ações em massa
-*   Exclusão de pedidos
+- Autenticação simples por senha via variável de ambiente
+- CRUD completo de pedidos, clientes e produtos
+- Listagem paginada com filtros de busca
+- Agrupamento de pedidos por status ou cliente
+- Atualização de status e ações em massa
+- Lixeira com restauração para pedidos, clientes e produtos
+- Painel de estatísticas por status
+- Resumo de lucro diário, mensal, anual e total
+- Consulta de lucro por período específico
 
-**Clientes**
-*   Criar cliente
-*   Listar clientes
-*   Editar cliente
-*   Deletar cliente
+## Estrutura
 
-**Produtos**
-*   Criar produto
-*   Listar produtos
-*   Editar produto
-*   Deletar produto
-
-**Lucro**
-*   Resumo diário
-*   Resumo mensal
-*   Resumo anual
-*   Consulta por período específico
-
-**Sistema**
-*   Login simples por senha via variável de ambiente
-*   Integração completa com API
-
-Estrutura do projeto
-
-
-
-src
-├── services
-│ └── api.js
-├── App.jsx
+```
+src/
+├── services/
+│   └── api.js          # chamadas HTTP centralizadas
+├── hooks/
+│   ├── useOrders.js    # estado e ações de pedidos
+│   ├── useClients.js   # estado e ações de clientes
+│   └── useProducts.js  # estado e ações de produtos
+├── pages/
+│   ├── OrdersPage.jsx
+│   ├── ClientsPage.jsx
+│   └── ProductsPage.jsx
+├── utils/
+│   └── formatters.js
+├── App.jsx             # autenticação e navegação
 └── main.jsx
+```
 
-Plain Text
-
-
-
-A comunicação com o backend é centralizada em `src/services/api.js`.
-
-Variáveis de ambiente
+## Configuração
 
 Crie um arquivo `.env` na raiz do projeto:
 
-
-
-VITE_API_URL=http://localhost:3000
+```env
+VITE_API_URL=https://sua-api.railway.app
 VITE_ACCESS_PASSWORD=senha
+```
 
-Plain Text
+Para desenvolvimento local, crie `.env.local` (sobrescreve o `.env`):
 
+```env
+VITE_API_URL=http://localhost:3000
+VITE_ACCESS_PASSWORD=1234
+```
 
+## Executando localmente
 
-Descrição:
-*   `VITE_API_URL`: URL base do backend
-*   `VITE_ACCESS_PASSWORD`: senha simples para liberar acesso à interface
+```bash
+# Instalar dependências
+npm install
 
-Executando o projeto localmente
+# Rodar em modo desenvolvimento
+npm run dev
+```
 
-1.  Instalar dependências
-    ```bash
-    npm install
-    ```
-2.  Rodar em modo desenvolvimento
-    ```bash
-    npm run dev
-    ```
+Interface disponível em `http://localhost:5173`.
 
-A aplicação normalmente sobe em:
-
-`http://localhost:5173`
-
-Build de produção
-
-Gerar build:
+## Build
 
 ```bash
 npm run build
+```
 
+Para testar o build localmente:
 
-
-Testar build localmente:
-
-Bash
-
-
+```bash
 npm run preview
+```
 
+## Deploy
 
+A aplicação pode ser hospedada em Vercel, Netlify ou Cloudflare Pages.
 
-Integração com API
+1. Conectar o repositório no provedor
+2. Configurar as variáveis de ambiente (`VITE_API_URL` e `VITE_ACCESS_PASSWORD`)
+3. Build command: `npm run build` — Output directory: `dist`
 
-Principais endpoints consumidos:
-
-Pedidos
-
-•
-GET /delivery/orders
-
-•
-GET /delivery/orders/filter
-
-•
-GET /delivery/orders/count
-
-•
-POST /delivery/order
-
-•
-PATCH /delivery/order/{id}
-
-•
-PATCH /delivery/order/{id}/status
-
-•
-DELETE /delivery/order/{id}
-
-Clientes
-
-•
-GET /delivery/clients
-
-•
-POST /delivery/clients
-
-•
-PATCH /delivery/clients/{id}
-
-•
-DELETE /delivery/clients/{id}
-
-Produtos
-
-•
-GET /delivery/products
-
-•
-POST /delivery/products
-
-•
-PATCH /delivery/products/{id}
-
-•
-DELETE /delivery/products/{id}
-
-Lucro
-
-•
-GET /delivery/profit/summary
-
-•
-GET /delivery/profit
-
-Deploy
-
-A aplicação pode ser hospedada em:
-
-•
-Vercel
-
-•
-Netlify
-
-•
-Cloudflare Pages
-
-Passos gerais:
-
-1.
-Conectar o repositório no provedor
-
-2.
-Configurar variáveis de ambiente
-
-3.
-Realizar o deploy
-
-Importante: o backend deve permitir CORS do domínio do frontend (variável CORS_ORIGINS ).
-
-Observações
-
-Este frontend depende da API backend para funcionar corretamente.
-Certifique-se de que VITE_API_URL esteja apontando para a URL correta do backend (local ou produção).
-
-Licença
-
-Projeto desenvolvido para fins educacionais e uso prático em aplicações full stack.
-
+> O domínio do frontend deve estar autorizado em `CORS_ORIGINS` no backend.
