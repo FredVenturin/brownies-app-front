@@ -1,7 +1,8 @@
+import { memo, useMemo } from "react";
 import { ordersApi } from "../services/api";
 import { formatDateBR } from "../utils/formatters";
 
-function OrderCard({ order, loading, onUpdateStatus, onStartEdit, onDelete }) {
+const OrderCard = memo(function OrderCard({ order, loading, onUpdateStatus, onStartEdit, onDelete }) {
   const orderTotal = (order.itens ?? []).reduce(
     (acc, it) => acc + Number(it.quantidade ?? 0) * Number(it.price ?? 0),
     0
@@ -77,7 +78,7 @@ function OrderCard({ order, loading, onUpdateStatus, onStartEdit, onDelete }) {
       </div>
     </div>
   );
-}
+});
 
 export function OrdersPage({
   allClients,
@@ -108,6 +109,16 @@ export function OrdersPage({
   startEditOrder, cancelEditOrder, handleUpdateOrder, handleCreateOrder,
   bulkUpdateStatus, bulkIncrement, bulkDelete,
 }) {
+  const sortedClients = useMemo(
+    () => [...allClients].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    [allClients]
+  );
+
+  const sortedProducts = useMemo(
+    () => [...allProducts].sort((a, b) => a.name.localeCompare(b.name, "pt-BR")),
+    [allProducts]
+  );
+
   return (
     <>
       {/* Stats */}
@@ -191,9 +202,7 @@ export function OrdersPage({
                 required
               />
               <datalist id="clients-list">
-                {[...allClients]
-                  .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-                  .map((c) => <option key={c._id} value={c.name} />)}
+                {sortedClients.map((c) => <option key={c._id} value={c.name} />)}
               </datalist>
             </label>
 
@@ -359,9 +368,7 @@ export function OrdersPage({
                     required
                   />
                   <datalist id="products-list">
-                    {[...allProducts]
-                      .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
-                      .map((p) => <option key={p._id} value={p.name} />)}
+                    {sortedProducts.map((p) => <option key={p._id} value={p.name} />)}
                   </datalist>
                 </label>
                 <label className="label">

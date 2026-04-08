@@ -212,11 +212,17 @@ export function useOrders({ allProducts = [] } = {}) {
   // ── Effects ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const tasks = [loadOrdersPaginated(), loadDeletedOrders(), loadStats(), loadProfitSummary(), loadProfitPeriod()];
+    const tasks = [loadOrdersPaginated(), loadStats(), loadProfitSummary(), loadProfitPeriod()];
     if (groupBy !== "none") tasks.push(loadAllOrders());
     Promise.allSettled(tasks).catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, isFiltered, filterStatus, filterName, filterProduct, startDate, endDate, deletedOrdersPage, deletedOrdersLimit]);
+  }, [page, limit, isFiltered, filterStatus, filterName, filterProduct, startDate, endDate]);
+
+  // Lixeira carrega separado: no mount e ao mudar paginação da lixeira
+  useEffect(() => {
+    loadDeletedOrders().catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deletedOrdersPage, deletedOrdersLimit]);
 
   useEffect(() => {
     if (!profitYear) return;
@@ -578,16 +584,22 @@ export function useOrders({ allProducts = [] } = {}) {
   }
 
   async function updateOrderStatus(orderId, newStatus) {
-    setLoading(true);
+    // Atualiza local imediatamente (otimista) — sem loading, sem espera
+    setOrders((prev) => prev.map((o) => o._id === orderId ? { ...o, status: newStatus } : o));
+    setAllOrders((prev) => prev.map((o) => o._id === orderId ? { ...o, status: newStatus } : o));
     try {
       const res = await ordersApi.updateStatus(orderId, newStatus);
-      if (!res?.ok) { alert(`Erro ${res?.status}: ` + JSON.stringify(res?.payload, null, 2)); return; }
-      await reloadOrders();
+      if (!res?.ok) {
+        alert(`Erro ${res?.status}: ` + JSON.stringify(res?.payload, null, 2));
+        await reloadOrders(); // reverte em caso de erro
+        return;
+      }
+      // Atualiza stats e lucro em segundo plano
+      Promise.allSettled([loadStats(), loadProfitSummary()]).catch(console.error);
     } catch (err) {
       console.error(err);
       alert("Erro de rede (veja o console).");
-    } finally {
-      setLoading(false);
+      await reloadOrders(); // reverte
     }
   }
 
