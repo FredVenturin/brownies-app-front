@@ -113,6 +113,11 @@ export function AnalyticsPage({
         { key: "top_product_qty", label: "Qtd fav.", right: true },
       ];
 
+  const sortedClientsRanking = useMemo(() => {
+    if (!analyticsProductFilter) return clientsRanking;
+    return [...clientsRanking].sort((a, b) => (b.top_product_qty ?? 0) - (a.top_product_qty ?? 0));
+  }, [clientsRanking, analyticsProductFilter]);
+
   const clientsTitle = analyticsProductFilter
     ? `Clientes — ${analyticsProductFilter}`
     : "Ranking de clientes";
@@ -220,7 +225,7 @@ export function AnalyticsPage({
             )}
           </div>
           <RankTable
-            data={clientsRanking}
+            data={sortedClientsRanking}
             columns={clientColumns}
             keyField="client"
             emptyMessage={emptyMsg}
