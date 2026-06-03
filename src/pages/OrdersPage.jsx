@@ -423,14 +423,22 @@ export function OrdersPage({
             onChange={(e) => setFilterProduct(e.target.value)}
             style={{ flex: 1 }}
           />
-          <select className="select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ width: 160 }}>
-            <option value="">Todos status</option>
-            <option value="confirmed">confirmed</option>
-            <option value="preparing">preparing</option>
-            <option value="packed">packed</option>
-            <option value="sold">sold</option>
-            <option value="cancelled">cancelled</option>
-          </select>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            {["confirmed", "preparing", "packed", "sold", "cancelled"].map((s) => (
+              <label key={s} style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 13, userSelect: "none" }}>
+                <input
+                  type="checkbox"
+                  checked={filterStatus.includes(s)}
+                  onChange={(e) =>
+                    setFilterStatus((prev) =>
+                      e.target.checked ? [...prev, s] : prev.filter((x) => x !== s)
+                    )
+                  }
+                />
+                {s}
+              </label>
+            ))}
+          </div>
           <select className="select" value={groupBy} onChange={(e) => setGroupBy(e.target.value)} style={{ width: 220 }}>
             <option value="none">Sem agrupamento</option>
             <option value={GROUP_MODES.STATUS}>Agrupar: status</option>

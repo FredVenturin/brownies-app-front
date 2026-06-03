@@ -174,4 +174,11 @@ export const ordersApi = {
     request(`/delivery/products/${productId}/restore`, {
       method: "PATCH",
     }),
+
+  // Analytics
+  analyticsProducts: ({ start_date, end_date } = {}) =>
+    request(`/delivery/analytics/products${toQuery({ start_date, end_date })}`),
+
+  analyticsClients: ({ start_date, end_date, product } = {}) =>
+    request(`/delivery/analytics/clients${toQuery({ start_date, end_date, product })}`),
 };

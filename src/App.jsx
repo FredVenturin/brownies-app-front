@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useOrders } from "./hooks/useOrders";
 import { useClients } from "./hooks/useClients";
 import { useProducts } from "./hooks/useProducts";
+import { useAnalytics } from "./hooks/useAnalytics";
 import { OrdersPage } from "./pages/OrdersPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { ProductsPage } from "./pages/ProductsPage";
+import { AnalyticsPage } from "./pages/AnalyticsPage";
 
 const ACCESS_PASSWORD = import.meta.env.VITE_ACCESS_PASSWORD || "";
 
@@ -18,6 +20,7 @@ function App() {
   const clientsHook = useClients();
   const productsHook = useProducts();
   const ordersHook = useOrders({ allProducts: productsHook.allProducts });
+  const analyticsHook = useAnalytics();
 
   if (!authOk) {
     return (
@@ -91,6 +94,13 @@ function App() {
           >
             Produtos
           </button>
+          <button
+            type="button"
+            className={`btn ${activeView === "analytics" ? "btnPrimary" : ""}`}
+            onClick={() => setActiveView("analytics")}
+          >
+            Analytics
+          </button>
         </div>
       </div>
 
@@ -99,7 +109,7 @@ function App() {
         <div>
           <h1 className="title">
             🍫{" "}
-            {activeView === "orders" ? "Pedidos" : activeView === "clients" ? "Clientes" : "Produtos"}
+            {activeView === "orders" ? "Pedidos" : activeView === "clients" ? "Clientes" : activeView === "products" ? "Produtos" : "Analytics"}
           </h1>
           <p className="subtitle">Controle rápido de vendas e status</p>
         </div>
@@ -122,6 +132,10 @@ function App() {
 
       {activeView === "products" ? (
         <ProductsPage {...productsHook} />
+      ) : null}
+
+      {activeView === "analytics" ? (
+        <AnalyticsPage {...analyticsHook} allProducts={productsHook.allProducts} />
       ) : null}
     </div>
   );

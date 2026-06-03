@@ -54,7 +54,7 @@ export function useOrders({ allProducts = [] } = {}) {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isFiltered, setIsFiltered] = useState(false);
-  const [filterStatus, setFilterStatus] = useState("");
+  const [filterStatus, setFilterStatus] = useState([]);
   const [filterName, setFilterName] = useState("");
   const [filterProduct, setFilterProduct] = useState("");
 
@@ -83,7 +83,7 @@ export function useOrders({ allProducts = [] } = {}) {
     try {
       const res = isFiltered
         ? await ordersApi.filter({
-            status: filterStatus || undefined,
+            status: filterStatus.length > 0 ? filterStatus.join(",") : undefined,
             name: filterName || undefined,
             product: filterProduct || undefined,
             start_date: startDate || undefined,
@@ -108,7 +108,7 @@ export function useOrders({ allProducts = [] } = {}) {
     try {
       const res = isFiltered
         ? await ordersApi.filter({
-            status: filterStatus || undefined,
+            status: filterStatus.length > 0 ? filterStatus.join(",") : undefined,
             name: filterName || undefined,
             product: filterProduct || undefined,
             start_date: startDate || undefined,
@@ -149,13 +149,18 @@ export function useOrders({ allProducts = [] } = {}) {
       const res = await ordersApi.stats();
       const payload = res?.payload ?? res;
       const attrs = payload?.data?.attributes ?? {};
+      const confirmed = attrs.confirmed ?? 0;
+      const preparing = attrs.preparing ?? 0;
+      const packed = attrs.packed ?? 0;
+      const sold = attrs.sold ?? 0;
+      const cancelled = attrs.cancelled ?? 0;
       setStats({
-        total: attrs.total ?? 0,
-        confirmed: attrs.confirmed ?? 0,
-        preparing: attrs.preparing ?? 0,
-        packed: attrs.packed ?? 0,
-        sold: attrs.sold ?? 0,
-        cancelled: attrs.cancelled ?? 0,
+        total: attrs.total ?? (confirmed + preparing + packed + sold + cancelled),
+        confirmed,
+        preparing,
+        packed,
+        sold,
+        cancelled,
       });
     } catch (err) {
       console.error(err);
@@ -400,7 +405,7 @@ export function useOrders({ allProducts = [] } = {}) {
 
   function clearFilter() {
     setIsFiltered(false);
-    setFilterStatus("");
+    setFilterStatus([]);
     setFilterName("");
     setFilterProduct("");
     setStartDate("");
@@ -411,7 +416,7 @@ export function useOrders({ allProducts = [] } = {}) {
   function buildActiveFilter() {
     if (!isFiltered) return {};
     return {
-      status: filterStatus || undefined,
+      status: filterStatus.length > 0 ? filterStatus.join(",") : undefined,
       name: filterName || undefined,
       product: filterProduct || undefined,
       start_date: startDate || undefined,
