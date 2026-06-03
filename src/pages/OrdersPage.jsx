@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { ordersApi } from "../services/api";
 import { formatDateBR } from "../utils/formatters";
 
@@ -76,6 +76,61 @@ const OrderCard = memo(function OrderCard({ order, loading, onUpdateStatus, onSt
           Excluir
         </button>
       </div>
+    </div>
+  );
+});
+
+const TagInput = memo(function TagInput({ tags, onChange, placeholder, datalistId, datalistItems }) {
+  const [inputVal, setInputVal] = useState("");
+
+  function addTag() {
+    const trimmed = inputVal.trim();
+    if (!trimmed || tags.includes(trimmed)) { setInputVal(""); return; }
+    onChange([...tags, trimmed]);
+    setInputVal("");
+  }
+
+  return (
+    <div style={{ flex: 1, minWidth: 180 }}>
+      <div style={{ display: "flex", gap: 6 }}>
+        <input
+          className="input"
+          list={datalistId}
+          value={inputVal}
+          onChange={(e) => setInputVal(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+          placeholder={placeholder}
+          style={{ flex: 1 }}
+        />
+        <button type="button" className="btn" onClick={addTag} style={{ width: 36, padding: 0, flexShrink: 0 }}>+</button>
+      </div>
+      <datalist id={datalistId}>
+        {(datalistItems ?? []).map((item) => <option key={item._id} value={item.name} />)}
+      </datalist>
+      {tags.length > 0 && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 6 }}>
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4,
+                background: "#c8956c", color: "#fff",
+                borderRadius: 20, padding: "3px 10px 3px 12px",
+                fontSize: 12, fontWeight: 600,
+              }}
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => onChange(tags.filter((t) => t !== tag))}
+                style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 0, fontSize: 15, lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 });
@@ -407,21 +462,19 @@ export function OrdersPage({
       {/* Filtros */}
       <div className="card" style={{ padding: 12, marginTop: 14 }}>
         <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
-          <input
-            className="input"
-            list="clients-list"
+          <TagInput
+            tags={filterName}
+            onChange={setFilterName}
             placeholder="Filtrar por cliente..."
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            style={{ flex: 1 }}
+            datalistId="filter-clients-list"
+            datalistItems={sortedClients}
           />
-          <input
-            className="input"
-            list="products-list"
+          <TagInput
+            tags={filterProduct}
+            onChange={setFilterProduct}
             placeholder="Filtrar por produto..."
-            value={filterProduct}
-            onChange={(e) => setFilterProduct(e.target.value)}
-            style={{ flex: 1 }}
+            datalistId="filter-products-list"
+            datalistItems={sortedProducts}
           />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
             {["confirmed", "preparing", "packed", "sold", "cancelled"].map((s) => (

@@ -55,8 +55,8 @@ export function useOrders({ allProducts = [] } = {}) {
   const [endDate, setEndDate] = useState("");
   const [isFiltered, setIsFiltered] = useState(false);
   const [filterStatus, setFilterStatus] = useState([]);
-  const [filterName, setFilterName] = useState("");
-  const [filterProduct, setFilterProduct] = useState("");
+  const [filterName, setFilterName] = useState([]);
+  const [filterProduct, setFilterProduct] = useState([]);
 
   const [groupBy, setGroupBy] = useState("none");
 
@@ -84,8 +84,8 @@ export function useOrders({ allProducts = [] } = {}) {
       const res = isFiltered
         ? await ordersApi.filter({
             status: filterStatus.length > 0 ? filterStatus.join(",") : undefined,
-            name: filterName || undefined,
-            product: filterProduct || undefined,
+            name: filterName.length > 0 ? filterName.join(",") : undefined,
+            product: filterProduct.length > 0 ? filterProduct.join(",") : undefined,
             start_date: startDate || undefined,
             end_date: endDate || undefined,
             page,
@@ -109,8 +109,8 @@ export function useOrders({ allProducts = [] } = {}) {
       const res = isFiltered
         ? await ordersApi.filter({
             status: filterStatus.length > 0 ? filterStatus.join(",") : undefined,
-            name: filterName || undefined,
-            product: filterProduct || undefined,
+            name: filterName.length > 0 ? filterName.join(",") : undefined,
+            product: filterProduct.length > 0 ? filterProduct.join(",") : undefined,
             start_date: startDate || undefined,
             end_date: endDate || undefined,
           })
@@ -406,8 +406,8 @@ export function useOrders({ allProducts = [] } = {}) {
   function clearFilter() {
     setIsFiltered(false);
     setFilterStatus([]);
-    setFilterName("");
-    setFilterProduct("");
+    setFilterName([]);
+    setFilterProduct([]);
     setStartDate("");
     setEndDate("");
     setPage(1);
@@ -417,8 +417,8 @@ export function useOrders({ allProducts = [] } = {}) {
     if (!isFiltered) return {};
     return {
       status: filterStatus.length > 0 ? filterStatus.join(",") : undefined,
-      name: filterName || undefined,
-      product: filterProduct || undefined,
+      name: filterName.length > 0 ? filterName.join(",") : undefined,
+      product: filterProduct.length > 0 ? filterProduct.join(",") : undefined,
       start_date: startDate || undefined,
       end_date: endDate || undefined,
     };
