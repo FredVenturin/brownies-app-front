@@ -57,6 +57,7 @@ export function useOrders({ allProducts = [] } = {}) {
   const [filterStatus, setFilterStatus] = useState([]);
   const [filterName, setFilterName] = useState([]);
   const [filterProduct, setFilterProduct] = useState([]);
+  const [filterVersion, setFilterVersion] = useState(0);
 
   const [groupBy, setGroupBy] = useState("none");
 
@@ -221,7 +222,7 @@ export function useOrders({ allProducts = [] } = {}) {
     if (groupBy !== "none") tasks.push(loadAllOrders());
     Promise.allSettled(tasks).catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, isFiltered, filterStatus, filterName, filterProduct, startDate, endDate]);
+  }, [page, limit, filterVersion]);
 
   // Lixeira carrega separado: no mount e ao mudar paginação da lixeira
   useEffect(() => {
@@ -401,7 +402,7 @@ export function useOrders({ allProducts = [] } = {}) {
 
   // ── Filter helpers ─────────────────────────────────────────────────────────
 
-  function applyFilter() { setIsFiltered(true); setPage(1); }
+  function applyFilter() { setIsFiltered(true); setPage(1); setFilterVersion((v) => v + 1); }
 
   function clearFilter() {
     setIsFiltered(false);
@@ -411,6 +412,7 @@ export function useOrders({ allProducts = [] } = {}) {
     setStartDate("");
     setEndDate("");
     setPage(1);
+    setFilterVersion((v) => v + 1);
   }
 
   function buildActiveFilter() {
