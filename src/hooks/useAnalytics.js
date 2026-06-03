@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ordersApi } from "../services/api";
 
 export function useAnalytics() {
@@ -8,6 +8,9 @@ export function useAnalytics() {
   const [analyticsStartDate, setAnalyticsStartDate] = useState("");
   const [analyticsEndDate, setAnalyticsEndDate] = useState("");
   const [analyticsProductFilter, setAnalyticsProductFilter] = useState("");
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadAnalytics(); }, []);
 
   async function loadAnalytics() {
     setAnalyticsLoading(true);

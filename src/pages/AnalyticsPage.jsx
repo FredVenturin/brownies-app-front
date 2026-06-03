@@ -100,12 +100,24 @@ export function AnalyticsPage({
     },
   ];
 
-  const clientColumns = [
-    { key: "client", label: "Cliente", bold: true },
-    { key: "total_qty", label: "Qtd total", right: true },
-    { key: "top_product", label: "Produto favorito" },
-    { key: "top_product_qty", label: "Qtd fav.", right: true },
-  ];
+  const clientColumns = analyticsProductFilter
+    ? [
+        { key: "client", label: "Cliente", bold: true },
+        { key: "top_product_qty", label: `Qtd de "${analyticsProductFilter}"`, right: true },
+        { key: "total_qty", label: "Total geral", right: true },
+      ]
+    : [
+        { key: "client", label: "Cliente", bold: true },
+        { key: "total_qty", label: "Qtd total", right: true },
+        { key: "top_product", label: "Produto favorito" },
+        { key: "top_product_qty", label: "Qtd fav.", right: true },
+      ];
+
+  const clientsTitle = analyticsProductFilter
+    ? `Clientes — ${analyticsProductFilter}`
+    : "Ranking de clientes";
+
+  const emptyMsg = analyticsLoading ? "Carregando..." : "Sem dados para o período selecionado.";
 
   const hasData = productsRanking.length > 0 || clientsRanking.length > 0;
 
@@ -177,40 +189,43 @@ export function AnalyticsPage({
         </div>
       </div>
 
-      {/* Produtos mais vendidos */}
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div style={{ fontWeight: 800, marginBottom: 12 }}>
-          Produtos mais vendidos
-          {productsRanking.length > 0 && (
-            <span className="mini" style={{ marginLeft: 8, fontWeight: 400 }}>
-              {productsRanking.length} produto{productsRanking.length !== 1 ? "s" : ""}
-            </span>
-          )}
+      {/* Tabelas lado a lado */}
+      <div style={{ display: "flex", gap: 16, marginTop: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
+        {/* Produtos mais vendidos */}
+        <div className="card" style={{ padding: 12, flex: 1, minWidth: 280 }}>
+          <div style={{ fontWeight: 800, marginBottom: 12 }}>
+            Produtos mais vendidos
+            {productsRanking.length > 0 && (
+              <span className="mini" style={{ marginLeft: 8, fontWeight: 400 }}>
+                {productsRanking.length} produto{productsRanking.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <RankTable
+            data={productsRanking}
+            columns={productColumns}
+            keyField="product"
+            emptyMessage={emptyMsg}
+          />
         </div>
-        <RankTable
-          data={productsRanking}
-          columns={productColumns}
-          keyField="product"
-          emptyMessage='Clique em "Buscar" para carregar o ranking de produtos.'
-        />
-      </div>
 
-      {/* Ranking de clientes */}
-      <div className="card" style={{ padding: 12, marginTop: 14 }}>
-        <div style={{ fontWeight: 800, marginBottom: 12 }}>
-          Ranking de clientes
-          {clientsRanking.length > 0 && (
-            <span className="mini" style={{ marginLeft: 8, fontWeight: 400 }}>
-              {clientsRanking.length} cliente{clientsRanking.length !== 1 ? "s" : ""}
-            </span>
-          )}
+        {/* Ranking de clientes */}
+        <div className="card" style={{ padding: 12, flex: 1, minWidth: 280 }}>
+          <div style={{ fontWeight: 800, marginBottom: 12 }}>
+            {clientsTitle}
+            {clientsRanking.length > 0 && (
+              <span className="mini" style={{ marginLeft: 8, fontWeight: 400 }}>
+                {clientsRanking.length} cliente{clientsRanking.length !== 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
+          <RankTable
+            data={clientsRanking}
+            columns={clientColumns}
+            keyField="client"
+            emptyMessage={emptyMsg}
+          />
         </div>
-        <RankTable
-          data={clientsRanking}
-          columns={clientColumns}
-          keyField="client"
-          emptyMessage='Clique em "Buscar" para carregar o ranking de clientes.'
-        />
       </div>
     </>
   );
